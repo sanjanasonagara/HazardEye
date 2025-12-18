@@ -1109,3 +1109,23 @@ WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."Cre
 SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
 FROM "Incidents" AS i
 WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
+2025-12-18 13:16:45.494 +05:30 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
+FROM "Incidents" AS i
+WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
+2025-12-18 13:17:45.505 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
+FROM "Incidents" AS i
+WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
+2025-12-18 13:18:45.526 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
+FROM "Incidents" AS i
+WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
+2025-12-18 13:19:45.530 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
+FROM "Incidents" AS i
+WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
+2025-12-18 13:20:45.542 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT i."Id", i."Advisory", i."AssignedTo", i."CapturedAt", i."Category", i."ClosedAt", i."CreatedAt", i."CreatedBy", i."DeviceId", i."IncidentId", i."MediaUris", i."MlMetadata", i."Note", i."ResolvedAt", i."ServerIncidentId", i."Severity", i."Status"
+FROM "Incidents" AS i
+WHERE i."Severity" IN ('High', 'Critical') AND i."Status" = 'Pending' AND i."CreatedAt" > now() + INTERVAL '-5 mins'
