@@ -79,7 +79,7 @@ export const IncidentAreaChart: React.FC<IncidentAreaChartProps> = ({ incidents 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
       {/* Static Leaflet map for spatial context */}
       <div className="h-72 rounded-lg border border-slate-200 overflow-hidden relative">
-        <MapContainer
+        {/* <MapContainer
           center={[22.3735, 73.111]}
           zoom={14}
           style={{ height: '100%', width: '100%' }}
@@ -90,7 +90,13 @@ export const IncidentAreaChart: React.FC<IncidentAreaChartProps> = ({ incidents 
           keyboard={false}
           touchZoom={false}
           boxZoom={false}
-        >
+        > */}
+        <MapContainer
+  center={[22.3735, 73.111]}
+  zoom={14}
+  style={{ height: '100%', width: '100%' }}
+>
+
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap contributors"

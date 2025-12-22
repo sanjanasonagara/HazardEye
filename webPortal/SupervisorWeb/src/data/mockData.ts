@@ -8,6 +8,10 @@ import {
   IncidentStatus,
   TaskStatus,
   AIRecommendation,
+  SafetyResource,
+  TrainingMaterial,
+  Alert,
+  EmergencyInstruction
 } from '../types';
 
 export const AREA_OPTIONS = ['Plant A', 'Plant B', 'Plant C', 'Warehouse', 'Office Building'];
@@ -101,7 +105,7 @@ export const generateMockIncidents = (count: number = 25): Incident[] => {
   ];
   const severities: Severity[] = ['High', 'Medium', 'Low'];
   const statuses: IncidentStatus[] = ['Open', 'In Progress', 'Resolved'];
-  
+
   const descriptions = [
     'Exposed electrical wiring found near main control panel. Immediate attention required.',
     'Structural crack observed in support beam. Engineering assessment needed.',
@@ -172,7 +176,7 @@ export const generateMockTasks = (incidents: Incident[], users: User[]): Task[] 
     const supervisor = supervisorUsers[0];
     const priority = priorities[Math.floor(Math.random() * priorities.length)];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     const dueDate = new Date(incident.dateTime);
     dueDate.setDate(dueDate.getDate() + Math.floor(Math.random() * 14) + 1);
 
@@ -331,4 +335,134 @@ export const generateMockTasks = (incidents: Incident[], users: User[]): Task[] 
 
   return tasks;
 };
+
+// Mock Safety Resources
+export const mockSafetyResources: SafetyResource[] = [
+  {
+    id: 'sr-1',
+    title: 'General Workplace Safety',
+    type: 'Safety Guideline',
+    lastUpdated: new Date('2024-12-15'),
+    content: 'Standard safety protocols for all on-site personnel.',
+    sections: [
+      {
+        title: 'Visitor & Employee Access',
+        items: [
+          'Always wear your ID badge while on company premises.',
+          'Report any unauthorized personnel to security immediately.',
+          'Keep walkways and emergency exits clear of obstructions.'
+        ],
+        icon: 'ShieldCheck'
+      },
+      {
+        title: 'Equipment Operation',
+        items: [
+          'Do not operate machinery unless trained and authorized.',
+          'Always use the proper tools for the job.',
+          'Perform pre-operational checks on all equipment.'
+        ],
+        icon: 'Settings'
+      }
+    ]
+  },
+  {
+    id: 'sr-2',
+    title: 'Lockout/Tagout Procedure (LOTO)',
+    type: 'SOP',
+    lastUpdated: new Date('2024-11-20'),
+    content: 'Standard Operating Procedure for controlling hazardous energy.',
+    sections: [
+      {
+        title: 'Preparation for Shutdown',
+        items: [
+          'Identify the energy source and type.',
+          'Notify all affected employees.',
+          'Prepare the necessary isolation devices.'
+        ],
+        icon: 'Power'
+      },
+      {
+        title: 'Lock & Tag Application',
+        items: [
+          'Apply the padlock or tagout device to the energy-isolating component.',
+          'Ensure the device is securely fastened.',
+          'Attach a warning tag with your name and date.'
+        ],
+        icon: 'Lock'
+      }
+    ]
+  }
+];
+
+// Mock Training Materials
+export const mockTrainingMaterials: TrainingMaterial[] = [
+  {
+    id: 'tm-1',
+    title: 'Chemical Safety Awareness',
+    description: 'A comprehensive guide to handling hazardous chemicals in the workplace.',
+    uploadedDate: new Date('2024-10-05'),
+    downloadUrl: '#',
+    thumbnail: 'https://picsum.photos/seed/training-1/400/225'
+  },
+  {
+    id: 'tm-2',
+    title: 'Fire Extinguisher Training',
+    description: 'Interactive course on how to properly use different types of fire extinguishers.',
+    uploadedDate: new Date('2024-09-12'),
+    downloadUrl: '#',
+    thumbnail: 'https://picsum.photos/seed/training-2/400/225'
+  },
+  {
+    id: 'tm-3',
+    title: 'First Aid & CPR Basics',
+    description: 'Essential first aid skills and CPR certification documentation.',
+    uploadedDate: new Date('2024-08-20'),
+    downloadUrl: '#',
+    thumbnail: 'https://picsum.photos/seed/training-3/400/225'
+  }
+];
+
+// Mock Alerts
+export const mockAlerts: Alert[] = [
+  {
+    id: 'alert-1',
+    title: 'Severe Weather Warning',
+    message: 'High winds expected in Plant A area. Secure all loose equipment and avoid elevated platforms.',
+    timestamp: new Date(),
+    severity: 'High'
+  },
+  {
+    id: 'alert-2',
+    title: 'Scheduled Power Outage',
+    message: 'Brief power interruption scheduled for Plant B Unit 2 at 14:00 for maintenance.',
+    timestamp: new Date(),
+    severity: 'Medium'
+  }
+];
+
+// Mock Emergency Instructions
+export const mockEmergencyInstructions: EmergencyInstruction[] = [
+  {
+    id: 'ei-1',
+    title: 'Fire Evacuation',
+    description: 'Steps to take in case of a fire emergency.',
+    steps: [
+      'Rescue: Assist anyone in immediate danger if safe to do so.',
+      'Alarm: Activate the nearest fire alarm station.',
+      'Contain: Close doors and windows to contain the fire.',
+      'Evacuate: Leave the building via the nearest safe exit.'
+    ]
+  },
+  {
+    id: 'ei-2',
+    title: 'Chemical Spill Response',
+    description: 'Protocol for managing hazardous material leaks.',
+    steps: [
+      'Evacuate the immediate area.',
+      'Notify the safety officer and hazmat team.',
+      'Identify the spilled substance if safe to do so.',
+      'Assist in cordoning off the area.'
+    ]
+  }
+];
 

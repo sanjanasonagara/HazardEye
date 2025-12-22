@@ -8,12 +8,12 @@ export type IncidentStatus = 'Open' | 'In Progress' | 'Resolved';
 
 export type TaskStatus = 'Open' | 'In Progress' | 'Completed' | 'Delayed';
 
-export type Department = 
-  | 'Electrical' 
-  | 'Mechanical' 
-  | 'Civil' 
-  | 'Fire & Safety' 
-  | 'Environmental' 
+export type Department =
+  | 'Electrical'
+  | 'Mechanical'
+  | 'Civil'
+  | 'Fire & Safety'
+  | 'Environmental'
   | 'General';
 
 export interface User {
@@ -93,11 +93,48 @@ export interface FilterState {
   statuses: IncidentStatus[];
 }
 
+export interface SafetyResource {
+  id: string;
+  title: string;
+  type: 'Safety Guideline' | 'SOP';
+  lastUpdated: Date;
+  content: string;
+  sections: { title: string; items: string[]; icon?: string }[];
+}
+
+export interface TrainingMaterial {
+  id: string;
+  title: string;
+  description: string;
+  uploadedDate: Date;
+  downloadUrl?: string;
+  thumbnail?: string;
+}
+
+export interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: Date;
+  severity: 'High' | 'Medium';
+}
+
+export interface EmergencyInstruction {
+  id: string;
+  title: string;
+  description: string;
+  steps: string[];
+}
+
 export interface AppState {
   currentUser: User;
   incidents: Incident[];
   tasks: Task[];
   users: User[];
   filters: FilterState;
+  safetyResources: SafetyResource[];
+  trainingMaterials: TrainingMaterial[];
+  alerts: Alert[];
+  emergencyInstructions: EmergencyInstruction[];
 }
 

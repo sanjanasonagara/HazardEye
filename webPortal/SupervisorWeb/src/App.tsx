@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { MainLayout } from './components/Layout/MainLayout';
@@ -8,6 +7,9 @@ import { IncidentDetail } from './pages/IncidentDetail';
 import { Tasks } from './pages/Tasks';
 import { TaskDetail } from './pages/TaskDetail';
 import ProfileSettings from './pages/ProfileSettings';
+
+import { SafetyResources } from './pages/SafetyResources';
+import { Training } from './pages/Training';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
             <Route path="incidents/:id" element={<IncidentDetail />} />
             <Route path="tasks" element={<Tasks />} />
             <Route path="tasks/:id" element={<TaskDetail />} />
+            <Route path="safety-resources" element={<SafetyResources />} />
+            <Route path="training" element={<Training />} />
             <Route path="profile" element={<ProfileSettings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

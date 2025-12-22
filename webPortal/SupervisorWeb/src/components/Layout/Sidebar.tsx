@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  AlertTriangle, 
-  ClipboardList, 
+import {
+  LayoutDashboard,
+  AlertTriangle,
+  ClipboardList,
   FileText,
-  ChevronRight 
+  BookOpen,
+  ChevronRight
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -13,6 +14,8 @@ const menuItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/incidents', label: 'Incident Reports', icon: AlertTriangle },
   { path: '/tasks', label: 'Tasks', icon: ClipboardList },
+  { path: '/safety-resources', label: 'Safety Resources', icon: FileText },
+  { path: '/training', label: 'Training', icon: BookOpen },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -31,15 +34,15 @@ export const Sidebar: React.FC = () => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <li key={item.path}>
                 <Link
                   to={item.path}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-primary-600 text-white' 
+                    ${isActive
+                      ? 'bg-primary-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }
                   `}

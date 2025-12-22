@@ -10,7 +10,15 @@ import {
   TaskComment,
   TaskDelayEntry,
 } from '../types';
-import { mockUsers, generateMockIncidents, generateMockTasks } from '../data/mockData';
+import {
+  mockUsers,
+  generateMockIncidents,
+  generateMockTasks,
+  mockSafetyResources,
+  mockTrainingMaterials,
+  mockAlerts,
+  mockEmergencyInstructions
+} from '../data/mockData';
 
 interface AppContextType {
   state: AppState;
@@ -85,38 +93,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         prev.map(task =>
           task.id === taskId
             ? (() => {
-                // Maintain delay history without overwriting previous entries
-                let delayHistory: TaskDelayEntry[] = task.delayHistory ?? [];
+              // Maintain delay history without overwriting previous entries
+              let delayHistory: TaskDelayEntry[] = task.delayHistory ?? [];
 
-                if (status === 'Delayed' && delayReason) {
-                  const entryDate = delayDate ?? new Date();
-                  const newEntry: TaskDelayEntry = {
-                    reason: delayReason,
-                    date: entryDate,
-                  };
-                  delayHistory = [...delayHistory, newEntry];
-
-                  return {
-                    ...task,
-                    status,
-                    delayHistory,
-                    // Keep single-value fields in sync with latest entry for existing UI
-                    delayReason: newEntry.reason,
-                    delayDate: newEntry.date,
-                  };
-                }
-
-                // For non-delayed status updates, preserve full history and latest displayed values
-                const latestEntry = delayHistory[delayHistory.length - 1];
+              if (status === 'Delayed' && delayReason) {
+                const entryDate = delayDate ?? new Date();
+                const newEntry: TaskDelayEntry = {
+                  reason: delayReason,
+                  date: entryDate,
+                };
+                delayHistory = [...delayHistory, newEntry];
 
                 return {
                   ...task,
                   status,
                   delayHistory,
-                  delayReason: latestEntry ? latestEntry.reason : undefined,
-                  delayDate: latestEntry ? latestEntry.date : undefined,
+                  // Keep single-value fields in sync with latest entry for existing UI
+                  delayReason: newEntry.reason,
+                  delayDate: newEntry.date,
                 };
-              })()
+              }
+
+              // For non-delayed status updates, preserve full history and latest displayed values
+              const latestEntry = delayHistory[delayHistory.length - 1];
+
+              return {
+                ...task,
+                status,
+                delayHistory,
+                delayReason: latestEntry ? latestEntry.reason : undefined,
+                delayDate: latestEntry ? latestEntry.date : undefined,
+              };
+            })()
             : task
         )
       );
@@ -148,9 +156,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         prev.map(task =>
           task.id === taskId
             ? {
-                ...task,
-                ...updates,
-              }
+              ...task,
+              ...updates,
+            }
             : task
         )
       );
@@ -217,12 +225,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const getFilteredTasks = useCallback((): Task[] => {
     const currentUserRole = currentUser.role;
-    
+
     // Employees only see their own tasks
     if (currentUserRole === 'employee') {
       return tasks.filter(task => task.assignedTo === currentUser.id);
     }
-    
+
     // Supervisors see all tasks
     return tasks;
   }, [tasks, currentUser]);
@@ -233,6 +241,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     tasks,
     users,
     filters,
+    safetyResources: mockSafetyResources,
+    trainingMaterials: mockTrainingMaterials,
+    alerts: mockAlerts,
+    emergencyInstructions: mockEmergencyInstructions,
   };
 
   return (

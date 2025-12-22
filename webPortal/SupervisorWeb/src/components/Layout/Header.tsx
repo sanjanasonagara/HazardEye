@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, ClipboardList, User, ChevronDown, LogOut } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, ClipboardList, User, ChevronDown, LogOut, FileText, BookOpen } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { UserRole } from '../../types';
 
@@ -39,10 +39,9 @@ export const Header: React.FC = () => {
         <NavLink
           to="/"
           className={({ isActive }) =>
-            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive
-                ? 'text-white bg-blue-900/80 shadow-sm'
-                : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
+            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+              ? 'text-white bg-blue-900/80 shadow-sm'
+              : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
             }`
           }
         >
@@ -52,10 +51,9 @@ export const Header: React.FC = () => {
         <NavLink
           to="/incidents"
           className={({ isActive }) =>
-            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive
-                ? 'text-white bg-blue-900/80 shadow-sm'
-                : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
+            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+              ? 'text-white bg-blue-900/80 shadow-sm'
+              : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
             }`
           }
         >
@@ -65,15 +63,38 @@ export const Header: React.FC = () => {
         <NavLink
           to="/tasks"
           className={({ isActive }) =>
-            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive
-                ? 'text-white bg-blue-900/80 shadow-sm'
-                : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
+            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+              ? 'text-white bg-blue-900/80 shadow-sm'
+              : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
             }`
           }
         >
           <ClipboardList className="w-4 h-4" />
           Tasks
+        </NavLink>
+        <NavLink
+          to="/safety-resources"
+          className={({ isActive }) =>
+            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+              ? 'text-white bg-blue-900/80 shadow-sm'
+              : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
+            }`
+          }
+        >
+          <FileText className="w-4 h-4" />
+          Safety Resources
+        </NavLink>
+        <NavLink
+          to="/training"
+          className={({ isActive }) =>
+            `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+              ? 'text-white bg-blue-900/80 shadow-sm'
+              : 'text-blue-100 hover:text-white hover:bg-blue-800/60'
+            }`
+          }
+        >
+          <BookOpen className="w-4 h-4" />
+          Training
         </NavLink>
       </nav>
 
@@ -100,21 +121,19 @@ export const Header: React.FC = () => {
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
                 <button
                   onClick={() => handleRoleSwitch('supervisor')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    state.currentUser.role === 'supervisor' 
-                      ? 'bg-blue-50 text-blue-700 font-medium' 
-                      : 'text-gray-700'
-                  }`}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${state.currentUser.role === 'supervisor'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-700'
+                    }`}
                 >
                   Supervisor
                 </button>
                 <button
                   onClick={() => handleRoleSwitch('employee')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    state.currentUser.role === 'employee' 
-                      ? 'bg-blue-50 text-blue-700 font-medium' 
-                      : 'text-gray-700'
-                  }`}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${state.currentUser.role === 'employee'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-700'
+                    }`}
                 >
                   Employee
                 </button>
