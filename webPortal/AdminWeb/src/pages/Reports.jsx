@@ -8,7 +8,7 @@ const Reports = () => {
         { name: 'Incident Summary', description: 'Detailed log of all reported incidents', format: 'PDF/CSV' },
         { name: 'Safety Compliance', description: 'SOP adherence and violation stats', format: 'PDF' },
         { name: 'User Activity', description: 'Login and session history logs', format: 'CSV' },
-        { name: 'Maintenance Logs', description: 'Sensor repair and checkup logs', format: 'PDF/CSV' },
+
     ];
 
     return (

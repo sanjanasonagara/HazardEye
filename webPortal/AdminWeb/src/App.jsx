@@ -9,7 +9,7 @@ import CMS from './pages/CMS';
 import Reports from './pages/Reports';
 import ProfileSettings from './pages/ProfileSettings';
 import SafetyGuidelines from './pages/SafetyGuidelines';
-import Maintenance from './pages/Maintenance';
+
 
 function App() {
   return (
@@ -20,7 +20,7 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="cms" element={<CMS />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="maintenance" element={<Maintenance />} />
+
           <Route path="safety" element={<SafetyGuidelines />} />
           <Route path="profile" element={<ProfileSettings />} />
           {/* Fallback */}
