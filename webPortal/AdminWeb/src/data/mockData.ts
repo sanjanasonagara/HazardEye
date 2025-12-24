@@ -102,19 +102,19 @@ export const contentTypes = ['All', 'Safety Guideline', 'SOP', 'Announcement', '
 export const cmsContent = [
     {
         id: 1,
-        title: 'Fire Safety Guidelines 2024',
+        title: 'Fire Safety Guidelines',
         type: 'Safety Guideline',
         status: 'Published',
-        author: 'John Doe',
-        date: '2024-01-15'
+        author: 'abc',
+        date: '2025-12-15'
     },
     {
         id: 2,
         title: 'Chemical Handling SOP',
         type: 'SOP',
         status: 'Draft',
-        author: 'Jane Smith',
-        date: '2024-02-10'
+        author: 'xyz',
+        date: '2025-12-10'
     },
     {
         id: 3,
@@ -122,6 +122,6 @@ export const cmsContent = [
         type: 'Announcement',
         status: 'Archived',
         author: 'Admin',
-        date: '2023-12-20'
+        date: '2025-12-20'
     }
 ];

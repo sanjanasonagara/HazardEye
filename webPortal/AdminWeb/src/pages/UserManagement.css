@@ -31,15 +31,6 @@
     font-size: 0.875rem;
 }
 
-.admin-badge {
-    background-color: var(--color-primary-light);
-    color: var(--color-primary-dark);
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
 /* Filters Section */
 .filters-card {
     background-color: var(--color-bg-surface);

@@ -1,0 +1,111 @@
+.markdown-body {
+    color: #374151;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.markdown-body h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+    color: #111827;
+}
+
+.markdown-body h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #1f2937;
+}
+
+.markdown-body h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 0.5rem;
+}
+
+.markdown-body p {
+    margin-bottom: 1rem;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.markdown-body ul li {
+    margin-bottom: 0.75rem;
+    position: relative;
+    padding-left: 1.75rem;
+}
+
+.markdown-body ul li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid #2563eb;
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    font-style: italic;
+    margin: 1.5rem 0;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-left-width: 4px;
+}
+
+.markdown-body hr {
+    margin: 2.5rem 0;
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.markdown-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.markdown-body th,
+.markdown-body td {
+    padding: 0.875rem;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+.markdown-body th {
+    background-color: #f9fafb;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.markdown-body code {
+    background-color: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875em;
+    color: #ef4444;
+}

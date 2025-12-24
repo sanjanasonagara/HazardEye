@@ -343,56 +343,17 @@ export const mockSafetyResources: SafetyResource[] = [
     title: 'General Workplace Safety',
     type: 'Safety Guideline',
     lastUpdated: new Date('2024-12-15'),
-    content: 'Standard safety protocols for all on-site personnel.',
-    sections: [
-      {
-        title: 'Visitor & Employee Access',
-        items: [
-          'Always wear your ID badge while on company premises.',
-          'Report any unauthorized personnel to security immediately.',
-          'Keep walkways and emergency exits clear of obstructions.'
-        ],
-        icon: 'ShieldCheck'
-      },
-      {
-        title: 'Equipment Operation',
-        items: [
-          'Do not operate machinery unless trained and authorized.',
-          'Always use the proper tools for the job.',
-          'Perform pre-operational checks on all equipment.'
-        ],
-        icon: 'Settings'
-      }
-    ]
+    markdownFile: 'general-workplace-safety.md'
   },
   {
     id: 'sr-2',
     title: 'Lockout/Tagout Procedure (LOTO)',
     type: 'SOP',
     lastUpdated: new Date('2024-11-20'),
-    content: 'Standard Operating Procedure for controlling hazardous energy.',
-    sections: [
-      {
-        title: 'Preparation for Shutdown',
-        items: [
-          'Identify the energy source and type.',
-          'Notify all affected employees.',
-          'Prepare the necessary isolation devices.'
-        ],
-        icon: 'Power'
-      },
-      {
-        title: 'Lock & Tag Application',
-        items: [
-          'Apply the padlock or tagout device to the energy-isolating component.',
-          'Ensure the device is securely fastened.',
-          'Attach a warning tag with your name and date.'
-        ],
-        icon: 'Lock'
-      }
-    ]
+    markdownFile: 'loto-procedure.md'
   }
 ];
+
 
 // Mock Training Materials
 export const mockTrainingMaterials: TrainingMaterial[] = [

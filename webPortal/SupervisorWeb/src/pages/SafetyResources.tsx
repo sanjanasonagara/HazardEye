@@ -1,18 +1,23 @@
 import React, { useState, useMemo } from 'react';
-import { Download, FileText, ShieldCheck, CheckCircle2, Search, Settings, Power, Lock } from 'lucide-react';
+import { Download, FileText, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardHeader, CardBody } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import '../styles/markdown.css';
+
+// Import markdown files as raw strings
+import generalWorkplaceSafety from '../content/safety/general-workplace-safety.md?raw';
+import lotoProcedure from '../content/safety/loto-procedure.md?raw';
+
+const MarkdownMap: Record<string, string> = {
+    'general-workplace-safety.md': generalWorkplaceSafety,
+    'loto-procedure.md': lotoProcedure,
+};
 
 type ResourceTab = 'All' | 'Safety Guideline' | 'SOP';
-
-const IconMap: Record<string, React.ReactNode> = {
-    ShieldCheck: <ShieldCheck size={20} className="text-blue-600" />,
-    Settings: <Settings size={20} className="text-gray-600" />,
-    Power: <Power size={20} className="text-orange-600" />,
-    Lock: <Lock size={20} className="text-red-600" />,
-};
 
 export const SafetyResources: React.FC = () => {
     const { state } = useApp();
@@ -22,8 +27,9 @@ export const SafetyResources: React.FC = () => {
     const filteredResources = useMemo(() => {
         return state.safetyResources.filter(resource => {
             const matchesTab = activeTab === 'All' || resource.type === activeTab;
+            const markdownContent = MarkdownMap[resource.markdownFile] || '';
             const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                resource.content.toLowerCase().includes(searchQuery.toLowerCase());
+                markdownContent.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesTab && matchesSearch;
         });
     }, [state.safetyResources, activeTab, searchQuery]);
@@ -64,8 +70,8 @@ export const SafetyResources: React.FC = () => {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab
-                                ? 'bg-white text-primary-700 shadow-sm border border-gray-200'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                            ? 'bg-white text-primary-700 shadow-sm border border-gray-200'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         {tab === 'All' ? 'All Resources' : tab + 's'}
@@ -88,8 +94,8 @@ export const SafetyResources: React.FC = () => {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h2 className="text-xl font-bold text-gray-800">{resource.title}</h2>
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${resource.type === 'SOP'
-                                                        ? 'bg-orange-100 text-orange-700'
-                                                        : 'bg-blue-100 text-blue-700'
+                                                    ? 'bg-orange-100 text-orange-700'
+                                                    : 'bg-blue-100 text-blue-700'
                                                     }`}>
                                                     {resource.type}
                                                 </span>
@@ -111,33 +117,10 @@ export const SafetyResources: React.FC = () => {
                                 </div>
                             </CardHeader>
                             <CardBody className="py-8">
-                                <div className="space-y-8 max-w-4xl">
-                                    <p className="text-gray-600 leading-relaxed font-medium bg-gray-50 p-4 rounded-xl border border-gray-100 italic">
-                                        "{resource.content}"
-                                    </p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {resource.sections.map((section, idx) => (
-                                            <div key={idx} className="space-y-4">
-                                                <div className="flex items-center gap-3 pb-2 border-b border-gray-100">
-                                                    {section.icon && IconMap[section.icon] ? (
-                                                        <div className="p-1.5 bg-gray-100 rounded-md">
-                                                            {IconMap[section.icon]}
-                                                        </div>
-                                                    ) : null}
-                                                    <h3 className="font-bold text-gray-800 text-lg uppercase tracking-tight">{section.title}</h3>
-                                                </div>
-                                                <ul className="space-y-3">
-                                                    {section.items.map((item, itemIdx) => (
-                                                        <li key={itemIdx} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100 group/item">
-                                                            <CheckCircle2 size={18} className="text-green-500 mt-0.5 shrink-0 transition-transform group-hover/item:scale-110" />
-                                                            <span className="text-gray-700 leading-snug">{item}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        ))}
-                                    </div>
+                                <div className="max-w-4xl markdown-body">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {MarkdownMap[resource.markdownFile] || ''}
+                                    </ReactMarkdown>
                                 </div>
                             </CardBody>
                         </Card>
@@ -162,3 +145,4 @@ export const SafetyResources: React.FC = () => {
         </div>
     );
 };
+

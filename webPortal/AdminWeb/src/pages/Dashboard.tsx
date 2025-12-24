@@ -43,10 +43,6 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-6">
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h2 className="text-xl font-bold text-slate-800">Operational Dashboard</h2>
-                <p className="text-slate-500">Real-time overview of safety, hazards, and analytics.</p>
-            </div>
 
             {/* SECTION 1: STATS GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -100,6 +96,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                     );
+
                 })}
             </div>
 
@@ -272,6 +269,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
         </div>
     );
 };

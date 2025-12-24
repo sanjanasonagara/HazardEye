@@ -28,7 +28,7 @@ const INITIAL_USERS = [
         lastActive: 'Just now',
         lastActiveDate: new Date(),
         isDeleted: false,
-        avatarInitials: 'SC'
+        avatarInitials: 'S'
     },
     {
         id: '2',
@@ -40,7 +40,7 @@ const INITIAL_USERS = [
         lastActive: '5 mins ago',
         lastActiveDate: new Date(Date.now() - 5 * 60000),
         isDeleted: false,
-        avatarInitials: 'JS'
+        avatarInitials: 'A'
     },
     {
         id: '3',
@@ -52,7 +52,7 @@ const INITIAL_USERS = [
         lastActive: '1 hour ago',
         lastActiveDate: new Date(Date.now() - 60 * 60000),
         isDeleted: false,
-        avatarInitials: 'MJ'
+        avatarInitials: 'L'
     },
     {
         id: '4',
@@ -64,7 +64,7 @@ const INITIAL_USERS = [
         lastActive: '2 days ago',
         lastActiveDate: new Date(Date.now() - 2 * 24 * 60 * 60000),
         isDeleted: false,
-        avatarInitials: 'ED'
+        avatarInitials: 'H'
     },
     {
         id: '5',
@@ -76,20 +76,9 @@ const INITIAL_USERS = [
         lastActive: 'Yesterday',
         lastActiveDate: new Date(Date.now() - 24 * 60 * 60000),
         isDeleted: false,
-        avatarInitials: 'RW'
+        avatarInitials: 'K'
     },
-    {
-        id: '6',
-        name: 'Deleted User',
-        email: 'deleted@example.com',
-        role: 'EMPLOYEE',
-        department: 'Operations',
-        status: 'DISABLED',
-        lastActive: '7 days ago',
-        lastActiveDate: new Date(Date.now() - 7 * 24 * 60 * 60000),
-        isDeleted: true,
-        avatarInitials: 'DU'
-    }
+
 ];
 
 // --- Helpers ---
@@ -237,8 +226,6 @@ const UserManagement = () => {
                     : u
             )
         );
-
-        // Mark as undone and add "Undo" entry (non-reversible)
         setAuditLog(prevLog => {
             const updatedLog = prevLog.map(l => l.id === auditId ? { ...l, undone: true, reversible: false } : l);
 
@@ -295,9 +282,6 @@ const UserManagement = () => {
                 <div className="page-title">
                     <h1>User Management</h1>
                     <p>Manage system access, roles, and departments</p>
-                </div>
-                <div>
-                    <span className="admin-badge">Admin Access</span>
                 </div>
             </div>
 

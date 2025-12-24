@@ -98,9 +98,9 @@ export interface SafetyResource {
   title: string;
   type: 'Safety Guideline' | 'SOP';
   lastUpdated: Date;
-  content: string;
-  sections: { title: string; items: string[]; icon?: string }[];
+  markdownFile: string;
 }
+
 
 export interface TrainingMaterial {
   id: string;
