@@ -11,15 +11,13 @@ export default function ProfileScreen() {
     const [autoUploadEnabled, setAutoUploadEnabled] = useState(false);
 
     const handleLogout = async () => {
+        // We can clear session or just navigate to login to allow switching
+        // For security, let's clear but user can log back in
         try {
-            await SecureStore.deleteItemAsync('token');
-            await SecureStore.deleteItemAsync('user');
-            await SecureStore.deleteItemAsync('userRole');
-            await SecureStore.deleteItemAsync('device_token');
+            // Optional: await SecureStore.deleteItemAsync('token');
             router.replace('/login');
         } catch (error) {
-            console.error("Logout failed", error);
-            Alert.alert("Error", "Failed to logout properly");
+            router.replace('/login');
         }
     };
 
@@ -175,10 +173,10 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                {/* Logout Button */}
+                {/* Logout/Switch Account Button */}
                 <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={20} color="#C53030" />
-                    <Text style={styles.logoutText}>LOGOUT</Text>
+                    <Ionicons name="swap-horizontal-outline" size={20} color="#2B6CB0" />
+                    <Text style={[styles.logoutText, { color: '#2B6CB0' }]}>SWITCH ACCOUNT</Text>
                 </TouchableOpacity>
 
             </ScrollView>

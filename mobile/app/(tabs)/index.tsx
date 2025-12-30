@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState, useCallback } from 'react';
-import { initDatabase, getPendingIncidents } from '../../src/services/Database';
+import { initDatabase, getPendingIncidents } from '../../src/services/DatabaseMock';
 import { syncIncidents } from '../../src/services/SyncService';
 
 export default function HomeScreen() {

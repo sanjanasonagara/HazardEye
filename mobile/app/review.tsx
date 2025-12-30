@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
-import { getIncidentById, updateIncident, saveIncident, Incident } from '../src/services/Database';
+import { getIncidentById, updateIncident, saveIncident, Incident } from '../src/services/DatabaseMock';
 
 // Mock locations
 const LOCATIONS = [

@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllIncidents, Incident, getPendingIncidents, deleteIncident } from '../../src/services/Database';
+import { getAllIncidents, Incident, getPendingIncidents, deleteIncident } from '../../src/services/DatabaseMock';
 import { syncIncidents } from '../../src/services/SyncService';
 
 type FilterType = 'All' | 'High' | 'Medium' | 'Low' | 'Pending';
@@ -107,7 +107,7 @@ export default function HistoryScreen() {
                             <Ionicons name="alert-circle-outline" size={24} color="#4A5568" />
                         )}
                     </View> */}
-                     <View style={styles.iconBox}>
+                    <View style={styles.iconBox}>
                         <Ionicons name="alert-circle-outline" size={24} color="#4A5568" />
                     </View>
                     <View style={styles.headerTextContainer}>

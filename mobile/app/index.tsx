@@ -7,23 +7,11 @@ export default function LandingScreen() {
     const router = useRouter();
 
     useEffect(() => {
-        checkAuth();
+        // ALWAYS default to Field Worker Dashboard
+        // Supervisor access is ONLY via Switch Account
+        router.replace('/(tabs)/');
     }, []);
 
-    const checkAuth = async () => {
-        try {
-            const token = await SecureStore.getItemAsync('token');
-            if (token) {
-                // Authenticated
-                router.replace('/(tabs)/');
-            } else {
-                // Not Authenticated
-                router.replace('/login');
-            }
-        } catch (e) {
-            router.replace('/login');
-        }
-    };
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

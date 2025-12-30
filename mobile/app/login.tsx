@@ -1,100 +1,117 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api from '../src/services/api';
-import { AxiosError } from 'axios';
-
-import { LoginResponse, UserDto } from '../src/types';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('');
-    // Use password instead of PIN for now, or map PIN to password if backend expects that
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        checkLoginStatus();
-    }, []);
-
-    const checkLoginStatus = async () => {
-        const token = await SecureStore.getItemAsync('token');
-        if (token) {
-            router.replace('/(tabs)');
-        }
-    };
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            setError('Please enter both email and password');
+        if (!username || !password) {
+            Alert.alert("Error", "Please enter both username and password");
             return;
         }
 
         setLoading(true);
-        setError('');
 
+        // Mock authentication logic
         try {
-            // Adjust endpoint payload to match AuthController.Login(LoginRequest)
-            // Assuming LoginRequest is { email, password }
-            const response = await api.post<LoginResponse>('/Auth/login', {
-                email, // Mapping username input to email field
-                password: password
-            });
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
-            const { token, user } = response.data;
+            let role = 'worker';
+            if (username.toLowerCase().includes('admin') || username.toLowerCase().includes('sup')) {
+                role = 'supervisor';
+            }
 
-            await SecureStore.setItemAsync('token', token);
-            await SecureStore.setItemAsync('user', JSON.stringify(user));
-            // Store role for permission checks
-            await SecureStore.setItemAsync('userRole', user.role);
+            // Save session
+            await SecureStore.setItemAsync('token', 'dummy-jwt-token');
+            await SecureStore.setItemAsync('user', username);
+            await SecureStore.setItemAsync('userRole', role);
 
-            router.replace('/(tabs)');
-        } catch (err: any) {
-            console.error("Login Error:", err);
-            setError(err.response?.data?.message || 'Login failed. Verify your credentials.');
+            // Navigate based on role
+            if (role === 'supervisor') {
+                router.replace('/(supervisor)/');
+            } else {
+                router.replace('/(tabs)/');
+            }
+
+        } catch (e) {
+            Alert.alert("Error", "Login failed. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.form}>
-                <Text style={styles.title}>Hazard-Eye</Text>
-                <Text style={styles.subtitle}>Worker Login</Text>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <Stack.Screen options={{ headerShown: false }} />
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email Address"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                />
+            {/* Top Section */}
+            <View style={styles.topSection}>
+                <View style={styles.logoCircle}>
+                    <Ionicons name="shield-checkmark" size={48} color="#1E3A8A" />
+                </View>
+                <Text style={styles.appName}>Hazard-Eye</Text>
+                <Text style={styles.tagline}>Supervisor Access Portal</Text>
+            </View>
 
-                <TouchableOpacity
-                    style={[styles.button, loading && styles.buttonDisabled]}
-                    onPress={handleLogin}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="white" />
-                    ) : (
-                        <Text style={styles.buttonText}>Login</Text>
-                    )}
-                </TouchableOpacity>
+            {/* Bottom Form Section */}
+            <View style={styles.bottomSection}>
+                <View style={styles.formContainer}>
+                    <Text style={styles.welcomeText}>Welcome Back</Text>
+                    <Text style={styles.instructionText}>Enter your credentials to continue</Text>
 
-                {/* Registration link removed as registration is usually admin-controlled or separate flow */}
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIconBox}>
+                            <Ionicons name="person" size={20} color="#64748B" />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Username"
+                            placeholderTextColor="#94A3B8"
+                            value={username}
+                            onChangeText={setUsername}
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <View style={styles.inputIconBox}>
+                            <Ionicons name="lock-closed" size={20} color="#64748B" />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            placeholderTextColor="#94A3B8"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
+                        onPress={handleLogin}
+                        disabled={loading}
+                        activeOpacity={0.8}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.loginBtnText}>SIGN IN</Text>
+                        )}
+                    </TouchableOpacity>
+
+                    <View style={styles.footer}>
+                        <Ionicons name="information-circle-outline" size={16} color="#94A3B8" />
+                        <Text style={styles.footerText}>Use 'admin' or 'sup' for Supervisor access</Text>
+                    </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -103,49 +120,125 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#2D3748',
+        backgroundColor: '#1E3A8A', // Deep Blue
+    },
+    topSection: {
+        height: '35%',
         justifyContent: 'center',
-        padding: 20,
-    },
-    form: {
-        backgroundColor: 'white',
-        padding: 30,
-        borderRadius: 16,
         alignItems: 'center',
+        paddingHorizontal: 20,
     },
-    title: {
-        fontSize: 28,
+    logoCircle: {
+        width: 80,
+        height: 80,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    appName: {
+        fontSize: 32,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        letterSpacing: 0.5,
+    },
+    tagline: {
+        fontSize: 14,
+        color: '#BFDBFE', // Light blue
+        marginTop: 4,
+        fontWeight: '500',
+    },
+    bottomSection: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        overflow: 'hidden',
+    },
+    formContainer: {
+        flex: 1,
+        padding: 32,
+        paddingTop: 48,
+    },
+    welcomeText: {
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#E53E3E',
-        marginBottom: 5,
+        color: '#1E293B',
+        marginBottom: 8,
     },
-    subtitle: {
-        fontSize: 18,
-        color: '#718096',
-        marginBottom: 30,
+    instructionText: {
+        fontSize: 16,
+        color: '#64748B',
+        marginBottom: 32,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        marginBottom: 16,
+        height: 60,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        // Shadow
+        shadowColor: '#64748B',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    inputIconBox: {
+        width: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#F1F5F9',
     },
     input: {
-        width: '100%',
-        backgroundColor: '#EDF2F7',
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 15,
+        flex: 1,
+        height: '100%',
+        paddingHorizontal: 16,
         fontSize: 16,
+        color: '#334155',
+        fontWeight: '500',
     },
-    button: {
-        width: '100%',
-        backgroundColor: '#3182CE',
-        padding: 15,
-        borderRadius: 8,
+    loginBtn: {
+        backgroundColor: '#2563EB',
+        borderRadius: 16,
+        height: 60,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 10,
+        marginTop: 16,
+        shadowColor: '#2563EB',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    buttonDisabled: {
-        backgroundColor: '#A0AEC0',
+    loginBtnDisabled: {
+        backgroundColor: '#93C5FD',
     },
-    buttonText: {
-        color: 'white',
-        fontWeight: 'bold',
+    loginBtnText: {
+        color: '#FFFFFF',
         fontSize: 16,
+        fontWeight: 'bold',
+        letterSpacing: 1,
+    },
+    footer: {
+        marginTop: 32,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
+    footerText: {
+        color: '#94A3B8',
+        fontSize: 13,
     },
 });

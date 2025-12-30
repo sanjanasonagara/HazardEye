@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { getTasks, Task, updateTaskStatus, addTaskComment, reportTaskDelay } from '../../src/services/Database';
+import { getTasks, Task, updateTaskStatus, addTaskComment, reportTaskDelay } from '../../src/services/DatabaseMock';
 
 export default function TasksScreen() {
     const [tasks, setTasks] = useState<Task[]>([]);

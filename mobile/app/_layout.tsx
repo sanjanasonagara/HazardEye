@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono';
 import { useColorScheme } from 'react-native';
 
+import { initDatabase } from '../src/services/DatabaseMock';
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -18,6 +20,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    initDatabase(); // Initialize DB on app start
     if (loaded) {
       SplashScreen.hideAsync();
     }
