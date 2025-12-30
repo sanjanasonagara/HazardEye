@@ -5,7 +5,8 @@ public enum UserRole
     Admin,
     SafetyOfficer,
     Auditor,
-    Viewer
+    Viewer,
+    Worker
 }
 
 public class User

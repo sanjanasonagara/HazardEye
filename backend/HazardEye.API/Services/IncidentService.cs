@@ -58,7 +58,8 @@ public class IncidentService : IIncidentService
             ["DeviceId"] = request.DeviceId
         }, "", "");
 
-        var dto = await MapToDtoAsync(incident);
+        var dto = await GetIncidentByIdAsync(incident.Id);
+        if (dto == null) dto = await MapToDtoAsync(incident); // Fallback
         await _hubContext.Clients.All.SendAsync("IncidentCreated", dto);
         return dto;
     }
@@ -270,7 +271,9 @@ public class IncidentService : IIncidentService
                 ? $"{incident.AssignedToUser.FirstName} {incident.AssignedToUser.LastName}" 
                 : null,
             CreatedBy = incident.CreatedBy,
-            CreatedByName = $"{incident.CreatedByUser.FirstName} {incident.CreatedByUser.LastName}",
+            CreatedByName = incident.CreatedByUser != null 
+                ? $"{incident.CreatedByUser.FirstName} {incident.CreatedByUser.LastName}" 
+                : "Unknown",
             MediaUris = incident.MediaUris,
             MlMetadata = incident.MlMetadata,
             Advisory = incident.Advisory,

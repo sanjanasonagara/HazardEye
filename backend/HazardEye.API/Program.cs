@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Serilog;
+using Npgsql;
 
 // Load .env file
 DotNetEnv.Env.Load();
@@ -46,8 +47,14 @@ Console.WriteLine($"[Config] DB_NAME: {dbName}");
 Console.WriteLine($"[Config] DB_USER: {dbUser}");
 Console.WriteLine($"[Config] FRONTEND_URL: {frontendUrl}");
 
+var npgsqlBuilder = new NpgsqlDataSourceBuilder(connectionString);
+npgsqlBuilder.EnableDynamicJson();
+var dataSource = npgsqlBuilder.Build();
+
+builder.Services.AddSingleton(dataSource);
+
 builder.Services.AddDbContext<HazardEyeDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(dataSource));
 
 // JWT Authentication
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];

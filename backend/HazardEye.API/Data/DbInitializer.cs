@@ -9,24 +9,36 @@ public static class DbInitializer
     {
         // Migrations are applied in Program.cs, so we just seed data now.
 
-        // Check if any users exist
-        if (context.Users.Any())
+        // Check and add Admin
+        if (!context.Users.Any(u => u.Email == "admin@hazardeye.com"))
         {
-            return; // DB has been seeded
+            context.Users.Add(new User
+            {
+                Email = "admin@hazardeye.com",
+                PasswordHash = AuthService.HashPassword("admin123"),
+                FirstName = "System",
+                LastName = "Admin",
+                Role = UserRole.Admin,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
         }
 
-        var adminUser = new User
+        // Check and add Worker
+        if (!context.Users.Any(u => u.Email == "worker@hazardeye.com"))
         {
-            Email = "admin@hazardeye.com",
-            PasswordHash = AuthService.HashPassword("AdminPassword123!"),
-            FirstName = "System",
-            LastName = "Admin",
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
+            context.Users.Add(new User
+            {
+                Email = "worker@hazardeye.com",
+                PasswordHash = AuthService.HashPassword("worker123"),
+                FirstName = "John",
+                LastName = "Worker",
+                Role = UserRole.Worker,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
 
-        context.Users.Add(adminUser);
         context.SaveChanges();
     }
 }

@@ -84,10 +84,14 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users")]
-    [Authorize(Policy = "AdminOnly")]
-    public async Task<ActionResult<List<UserDto>>> GetUsers()
+    [Authorize(Roles = "Admin,SafetyOfficer")]
+    public async Task<ActionResult<List<UserDto>>> GetUsers([FromQuery] string? role = null)
     {
         var users = await _authService.GetAllUsersAsync();
+        if (!string.IsNullOrEmpty(role))
+        {
+            users = users.Where(u => u.Role.Equals(role, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
         return Ok(users);
     }
 

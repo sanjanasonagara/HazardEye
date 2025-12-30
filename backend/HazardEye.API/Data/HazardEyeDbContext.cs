@@ -1,5 +1,6 @@
 using HazardEye.API.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace HazardEye.API.Data;
 
