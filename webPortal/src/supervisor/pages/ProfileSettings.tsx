@@ -15,13 +15,32 @@ import {
 } from 'lucide-react';
 
 const ProfileSettings: React.FC = () => {
-  // Mock user state
-  const [user, setUser] = useState({
-    name: 'Admin User',
-    role: 'Administration',
-    email: 'adminhazardeye@google.com',
-    phone: '9649838764',
-    department: 'Safety & Operations',
+  // Load user state from localStorage or mock
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const p = JSON.parse(stored);
+        return {
+          name: p.name || 'Supervisor User',
+          role: p.role || 'Supervision',
+          email: p.email || 'supervisor@hazardeye.com',
+          employeeId: p.employeeId || 'EMP-SUP-001',
+          phone: p.phone || '9876543210',
+          department: p.department || 'Operations',
+        };
+      }
+    } catch (e) {
+      console.error("Error parsing user from local storage", e);
+    }
+    return {
+      name: 'Supervisor User',
+      role: 'Supervision',
+      email: 'supervisor@hazardeye.com',
+      employeeId: 'EMP-SUP-001',
+      phone: '9876543210',
+      department: 'Safety & Operations',
+    };
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -97,7 +116,13 @@ const ProfileSettings: React.FC = () => {
             </div>
 
             <h3 className="text-xl font-bold text-slate-800 mb-1">{user.name}</h3>
-            <p className="text-sm font-medium text-slate-500 mb-4 bg-slate-100 px-3 py-1 rounded-full">{user.role}</p>
+            <p className="text-sm font-medium text-slate-500 mb-2 bg-slate-100 px-3 py-1 rounded-full">{user.role}</p>
+
+            <div className="mb-4">
+              <span className="font-mono bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded text-xs">
+                {user.employeeId}
+              </span>
+            </div>
 
             <div className="flex gap-2 justify-center w-full">
               <span className="bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-md text-xs font-semibold shadow-sm">
@@ -215,15 +240,15 @@ const ProfileSettings: React.FC = () => {
                 <div
                   key={acc.id}
                   className={`flex justify-between items-center p-4 border rounded-xl transition-all ${acc.active
-                      ? 'border-[color:var(--color-primary)] bg-blue-50/50 ring-1 ring-blue-100'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                    ? 'border-[color:var(--color-primary)] bg-blue-50/50 ring-1 ring-blue-100'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                     }`}
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${acc.active
-                          ? 'bg-[color:var(--color-primary)] text-white shadow-md'
-                          : 'bg-slate-100 text-slate-500'
+                        ? 'bg-[color:var(--color-primary)] text-white shadow-md'
+                        : 'bg-slate-100 text-slate-500'
                         }`}
                     >
                       {acc.name.charAt(0)}

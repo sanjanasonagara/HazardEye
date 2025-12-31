@@ -1,14 +1,33 @@
-import React, { useState } from 'react';
-import { User, Bell, Shield, LogOut, ArrowRightLeft, Mail, Phone, Building, Camera, Edit2, Lock, Key } from 'lucide-react';
+import { useState } from 'react';
+import { User, Shield, LogOut, ArrowRightLeft, Mail, Phone, Building, Camera, Edit2, Lock, Key } from 'lucide-react';
 
 const ProfileSettings = () => {
-    // Mock user state
-    const [user, setUser] = useState({
-        name: 'Admin User',
-        role: 'Administration',
-        email: 'adminhazardeye@google.com',
-        phone: '9649838764',
-        department: 'Safety & Operations'
+    // Load user state from localStorage or mock
+    const [user, setUser] = useState(() => {
+        try {
+            const stored = localStorage.getItem('user');
+            if (stored) {
+                const p = JSON.parse(stored);
+                return {
+                    name: p.name || 'Admin User',
+                    role: p.role || 'Administration',
+                    email: p.email || 'adminhazardeye@google.com',
+                    employeeId: p.employeeId || 'EMP-ADMIN-001',
+                    phone: p.phone || '9649838764',
+                    department: p.department || 'Safety & Operations'
+                };
+            }
+        } catch (e) {
+            console.error("Error parsing user from local storage", e);
+        }
+        return {
+            name: 'Admin User',
+            role: 'Administration',
+            email: 'adminhazardeye@google.com',
+            employeeId: 'EMP-ADMIN-001',
+            phone: '9649838764',
+            department: 'Safety & Operations'
+        };
     });
 
     const [isEditing, setIsEditing] = useState(false);
@@ -24,13 +43,14 @@ const ProfileSettings = () => {
         { id: 3, name: 'Safety Officer', role: 'Inspector', active: false },
     ];
 
-    const handleSwitchAccount = (accountName) => {
+    const handleSwitchAccount = (accountName: string) => {
         alert(`Switching to account: ${accountName}`);
     };
 
     const handleSaveProfile = () => {
         setUser(editForm);
         setIsEditing(false);
+        // Persist to local storage if desired, but for now just state
         alert('Profile updated successfully!');
     };
 
@@ -38,7 +58,7 @@ const ProfileSettings = () => {
         alert('Change Photo clicked (Mock Action)');
     };
 
-    const handleChangePassword = (e) => {
+    const handleChangePassword = (e: React.FormEvent) => {
         e.preventDefault();
         alert('Password update requested (Mock Action)');
     };
@@ -113,7 +133,12 @@ const ProfileSettings = () => {
                         </div>
 
                         <h3 className="text-xl font-bold text-slate-800">{user.name}</h3>
-                        <p className="text-sm font-medium text-slate-500 mb-3">{user.role}</p>
+                        <p className="text-sm font-medium text-slate-500 mb-1">{user.role}</p>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <span style={{ fontFamily: 'monospace', background: '#e2e8f0', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                                {user.employeeId}
+                            </span>
+                        </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <span className="badge" style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe' }}>Active</span>
                             <span className="badge" style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #dcfce7' }}>Verified</span>

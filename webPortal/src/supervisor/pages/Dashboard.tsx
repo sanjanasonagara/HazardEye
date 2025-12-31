@@ -1,17 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ClipboardList, TrendingUp, Clock, BarChart3, MapPin, Activity, AlertCircle, Download } from 'lucide-react';
+import { AlertTriangle, ClipboardList, TrendingUp, Clock, BarChart3, Activity, AlertCircle, Download } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useLocations } from '../../shared/context/LocationContext';
 import { Card, CardBody, CardHeader } from '../components/UI/Card';
 import { Badge } from '../components/UI/Badge';
-import { IncidentAreaChart } from '../components/Charts/IncidentAreaChart';
 import { SeverityDistributionChart } from '../components/Charts/SeverityDistributionChart';
 import { IncidentTrendChart } from '../components/Charts/IncidentTrendChart';
 import { RepeatIncidentsChart } from '../components/Charts/RepeatIncidentsChart';
+import { DashboardMapSection } from '../../shared/components/DashboardMapSection';
+import { DashboardStatsSection } from '../../shared/components/DashboardStatsSection';
 import { format } from 'date-fns';
 
 export const Dashboard: React.FC = () => {
   const { getFilteredIncidents, getFilteredTasks, state } = useApp();
+  const { locations } = useLocations();
   const [activeExportMenu, setActiveExportMenu] = React.useState<string | null>(null);
   const incidents = getFilteredIncidents();
   const tasks = getFilteredTasks();
@@ -124,130 +127,83 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6">
         <div className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 border-blue-100">
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-800">Total Incidents</p>
-                    <p className="text-3xl font-bold text-blue-950 mt-2">{stats.totalIncidents}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-600/10 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50 border-amber-100">
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">Open Incidents</p>
-                    <p className="text-3xl font-bold text-amber-900 mt-2">{stats.openIncidents}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-amber-600" />
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-red-50 via-red-100 to-red-50 border-red-100">
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-red-800">High Severity</p>
-                    <p className="text-3xl font-bold text-red-900 mt-2">{stats.highSeverity}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-sky-50 via-teal-100 to-sky-50 border-sky-100">
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-sky-900">Pending Tasks</p>
-                    <p className="text-3xl font-bold text-sky-950 mt-2">{stats.pendingTasks}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-sky-500/10 rounded-lg flex items-center justify-center">
-                    <ClipboardList className="w-6 h-6 text-sky-600" />
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </div>
+          {/* Stats Grid - Shared Component for Strict Layout Parity */}
+          <DashboardStatsSection stats={[
+            {
+              title: 'Total Incidents',
+              value: stats.totalIncidents,
+              change: '+0%', // Placeholder for parity
+              trend: 'up',
+              icon: AlertTriangle,
+              color: 'text-blue-600',
+              bg: 'bg-blue-50'
+            },
+            {
+              title: 'Open Incidents',
+              value: stats.openIncidents,
+              change: '+0%',
+              trend: 'up',
+              icon: Clock,
+              color: 'text-amber-600',
+              bg: 'bg-amber-50'
+            },
+            {
+              title: 'High Severity',
+              value: stats.highSeverity,
+              change: '+0%',
+              trend: 'down',
+              icon: TrendingUp,
+              color: 'text-red-600',
+              bg: 'bg-red-50'
+            },
+            {
+              title: 'Pending Tasks',
+              value: stats.pendingTasks,
+              change: '+0%',
+              trend: 'down',
+              icon: ClipboardList,
+              color: 'text-sky-600',
+              bg: 'bg-sky-50'
+            }
+          ]} />
         </div>
       </div>
 
       {/* Analytics Section */}
       {state.currentUser.role === 'supervisor' && (
         <div className="space-y-6">
-          {/* <div>
-            <h2 className="text-2xl font-bold text-gray-900">Analytics & Insights</h2>
-            <p className="text-gray-600 mt-1">Data-driven insights for safety management</p>
-          </div> */}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Incident Reports per Area */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-primary-600" />
-                      <h3 className="text-lg font-semibold text-gray-900">Incidents by Area</h3>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">Distribution of incidents across plant areas</p>
-                  </div>
-                  <div className="relative">
-                    <button
-                      onClick={() => setActiveExportMenu(activeExportMenu === 'Incidents by Area' ? null : 'Incidents by Area')}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Export Options"
-                    >
-                      <Download className="w-5 h-5" />
-                    </button>
+          {/* Shared Map & Incident Overview Section (Unifies with Admin) */}
+          <DashboardMapSection
+            locations={locations}
+            getMapStats={(loc) => {
+              const areaIncidents = incidents.filter(i => i.area === loc.name);
+              const high = areaIncidents.filter(i => i.severity === 'High').length;
+              const medium = areaIncidents.filter(i => i.severity === 'Medium').length;
+              const low = areaIncidents.filter(i => i.severity === 'Low').length;
+              return {
+                total: areaIncidents.length,
+                high,
+                medium,
+                low
+              };
+            }}
+            chartData={(() => {
+              const areaPlantCounts = incidents.reduce((acc, incident) => {
+                const key = `${incident.area} - ${incident.plant}`;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>);
 
-                    {activeExportMenu === 'Incidents by Area' && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setActiveExportMenu(null)} />
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                          <button
-                            onClick={() => { handleExport('Incidents by Area', 'csv'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" /> Export as CSV
-                          </button>
-                          <button
-                            onClick={() => { handleExport('Incidents by Area', 'svg'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Activity className="w-4 h-4" /> Export as SVG
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardBody data-chart-container="Incidents by Area">
-                {incidents.length > 0 ? (
-                  <IncidentAreaChart incidents={incidents} />
-                ) : (
-                  <div className="h-[300px] flex items-center justify-center text-gray-500">
-                    No data available
-                  </div>
-                )}
-              </CardBody>
-            </Card>
+              return Object.entries(areaPlantCounts)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count);
+            })()}
+            period="Last 7 Days"
+          />
 
-            {/* Severity Distribution */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Severity Distribution Chart */}
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -266,23 +222,12 @@ export const Dashboard: React.FC = () => {
                     >
                       <Download className="w-5 h-5" />
                     </button>
-
                     {activeExportMenu === 'Severity Distribution' && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setActiveExportMenu(null)} />
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                          <button
-                            onClick={() => { handleExport('Severity Distribution', 'csv'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" /> Export as CSV
-                          </button>
-                          <button
-                            onClick={() => { handleExport('Severity Distribution', 'svg'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Activity className="w-4 h-4" /> Export as SVG
-                          </button>
+                          <button onClick={() => { handleExport('Severity Distribution', 'csv'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Download className="w-4 h-4" /> Export as CSV </button>
+                          <button onClick={() => { handleExport('Severity Distribution', 'svg'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Activity className="w-4 h-4" /> Export as SVG </button>
                         </div>
                       </>
                     )}
@@ -319,23 +264,12 @@ export const Dashboard: React.FC = () => {
                     >
                       <Download className="w-5 h-5" />
                     </button>
-
                     {activeExportMenu === 'Incident Trend' && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setActiveExportMenu(null)} />
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                          <button
-                            onClick={() => { handleExport('Incident Trend', 'csv'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" /> Export as CSV
-                          </button>
-                          <button
-                            onClick={() => { handleExport('Incident Trend', 'svg'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Activity className="w-4 h-4" /> Export as SVG
-                          </button>
+                          <button onClick={() => { handleExport('Incident Trend', 'csv'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Download className="w-4 h-4" /> Export as CSV </button>
+                          <button onClick={() => { handleExport('Incident Trend', 'svg'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Activity className="w-4 h-4" /> Export as SVG </button>
                         </div>
                       </>
                     )}
@@ -372,23 +306,12 @@ export const Dashboard: React.FC = () => {
                     >
                       <Download className="w-5 h-5" />
                     </button>
-
                     {activeExportMenu === 'Repeat Incident Risk' && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setActiveExportMenu(null)} />
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                          <button
-                            onClick={() => { handleExport('Repeat Incident Risk', 'csv'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" /> Export as CSV
-                          </button>
-                          <button
-                            onClick={() => { handleExport('Repeat Incident Risk', 'svg'); setActiveExportMenu(null); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Activity className="w-4 h-4" /> Export as SVG
-                          </button>
+                          <button onClick={() => { handleExport('Repeat Incident Risk', 'csv'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Download className="w-4 h-4" /> Export as CSV </button>
+                          <button onClick={() => { handleExport('Repeat Incident Risk', 'svg'); setActiveExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"> <Activity className="w-4 h-4" /> Export as SVG </button>
                         </div>
                       </>
                     )}
@@ -504,7 +427,7 @@ export const Dashboard: React.FC = () => {
           </CardBody>
         </Card>
       </div>
-    </div>
+    </div >
   );
 };
 

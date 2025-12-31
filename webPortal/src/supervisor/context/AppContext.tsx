@@ -10,15 +10,10 @@ import {
   TaskComment,
   TaskDelayEntry,
 } from '../types';
-import {
-  mockUsers,
-  generateMockIncidents,
-  generateMockTasks,
-  mockSafetyResources,
-  mockTrainingMaterials,
-  mockAlerts,
-  mockEmergencyInstructions
-} from '../data/mockData';
+
+import { incidentService } from '../../shared/services/incidentService';
+import { taskService } from '../../shared/services/taskService';
+import { useEffect } from 'react';
 
 interface AppContextType {
   state: AppState;
@@ -56,11 +51,66 @@ const initialFilters: FilterState = {
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [incidents] = useState<Incident[]>(() => generateMockIncidents(25));
-  const [users] = useState<User[]>(mockUsers);
-  const [tasks, setTasks] = useState<Task[]>(() => generateMockTasks(incidents, mockUsers));
-  const [currentUser, setCurrentUserState] = useState<User>(mockUsers[0]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [users] = useState<User[]>([]); // mockUsers removed
+  const [tasks, setTasks] = useState<Task[]>([]); // Initial empty tasks until incidents load
+
+  // Initialize from localStorage if available
+  // Initialize from localStorage if available
+  // Initialize from localStorage if available
+  const [currentUser, setCurrentUserState] = useState<User>(() => {
+    try {
+      const storedJson = localStorage.getItem('user');
+      console.log('AppContext: Reading user from localStorage:', storedJson);
+      if (storedJson) {
+        const parsed = JSON.parse(storedJson);
+        const user = {
+          id: String(parsed.id),
+          name: parsed.firstName && parsed.lastName ? `${parsed.firstName} ${parsed.lastName}` : parsed.name || 'Unknown',
+          email: parsed.email,
+          role: ((parsed.role?.toLowerCase() === 'safetyofficer' || parsed.role?.toLowerCase() === 'supervisor') ? 'supervisor' : 'employee') as UserRole,
+          department: (parsed.company || parsed.department || 'General') as any, // Cast to any to bypass strict enum for now
+          avatar: `https://i.pravatar.cc/150?u=${parsed.id}`
+        };
+        console.log('AppContext: Parsed user:', user);
+        return user as User;
+      }
+    } catch (e) {
+      console.error("Failed to parse user from local storage", e);
+    }
+    // Default to empty/null user or force redirect in UI if checking this
+    console.log('AppContext: defaulting to empty user');
+    return {
+      id: '',
+      name: '',
+      email: '',
+      role: 'employee',
+      department: 'General',
+      avatar: ''
+    } as User;
+  });
+
   const [filters, setFilters] = useState<FilterState>(initialFilters);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [incidentsData, tasksData] = await Promise.all([
+          incidentService.getIncidents(),
+          taskService.getTasks()
+        ]);
+
+        setIncidents(incidentsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error("Failed to load data from API", error);
+        // Fallback to empty
+        setIncidents([]);
+        setTasks([]);
+      }
+    };
+    fetchData();
+  }, []);
 
   const switchRole = useCallback((role: UserRole) => {
     setCurrentUserState(prev => ({
@@ -241,10 +291,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     tasks,
     users,
     filters,
-    safetyResources: mockSafetyResources,
-    trainingMaterials: mockTrainingMaterials,
-    alerts: mockAlerts,
-    emergencyInstructions: mockEmergencyInstructions,
+    safetyResources: [],
+    trainingMaterials: [],
+    alerts: [],
+    emergencyInstructions: [],
   };
 
   return (

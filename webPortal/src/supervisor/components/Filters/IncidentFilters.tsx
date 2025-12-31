@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Filter, X, Calendar } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Severity, Department, IncidentStatus } from '../../types';
 import { Button } from '../UI/Button';
 import { Card, CardBody } from '../UI/Card';
+import { useLocations } from '../../../shared/context/LocationContext';
 
 const severities: Severity[] = ['High', 'Medium', 'Low'];
 const departments: Department[] = [
@@ -19,6 +20,7 @@ const timeRanges = ['All', 'Today', 'Weekly', 'Monthly', 'Custom'] as const;
 
 export const IncidentFilters: React.FC = () => {
   const { state, updateFilters } = useApp();
+  const { locations } = useLocations();
   const [showFilters, setShowFilters] = useState(false);
   const [showCustomDate, setShowCustomDate] = useState(false);
 
@@ -39,7 +41,7 @@ export const IncidentFilters: React.FC = () => {
       updateFilters({ timeRange: range });
     } else {
       setShowCustomDate(false);
-      updateFilters({ 
+      updateFilters({
         timeRange: range,
         customStartDate: undefined,
         customEndDate: undefined,
@@ -60,15 +62,16 @@ export const IncidentFilters: React.FC = () => {
     setShowCustomDate(false);
   };
 
-  const hasActiveFilters = 
+  const hasActiveFilters =
     state.filters.timeRange !== 'All' ||
     state.filters.areas.length > 0 ||
     state.filters.severities.length > 0 ||
     state.filters.departments.length > 0 ||
     state.filters.statuses.length > 0;
 
-  // Get unique areas from incidents
-  const areas = Array.from(new Set(state.incidents.map(i => i.area)));
+  // Use global active locations for the filter list
+  // Fallback to empty array if locations not yet loaded or empty, though context handles initial state
+  const areas = locations.filter(l => l.active).map(l => l.name);
 
   return (
     <div className="mb-6">
@@ -127,16 +130,16 @@ export const IncidentFilters: React.FC = () => {
                     <input
                       type="date"
                       value={state.filters.customStartDate?.toISOString().split('T')[0] || ''}
-                      onChange={(e) => updateFilters({ 
-                        customStartDate: e.target.value ? new Date(e.target.value) : undefined 
+                      onChange={(e) => updateFilters({
+                        customStartDate: e.target.value ? new Date(e.target.value) : undefined
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     />
                     <input
                       type="date"
                       value={state.filters.customEndDate?.toISOString().split('T')[0] || ''}
-                      onChange={(e) => updateFilters({ 
-                        customEndDate: e.target.value ? new Date(e.target.value) : undefined 
+                      onChange={(e) => updateFilters({
+                        customEndDate: e.target.value ? new Date(e.target.value) : undefined
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     />
@@ -211,7 +214,7 @@ export const IncidentFilters: React.FC = () => {
                 Area / Plant
               </label>
               <div className="flex flex-wrap gap-2">
-                {areas.map(area => (
+                {areas.length > 0 ? areas.map(area => (
                   <button
                     key={area}
                     onClick={() => toggleFilter('areas', area)}
@@ -225,7 +228,9 @@ export const IncidentFilters: React.FC = () => {
                   >
                     {area}
                   </button>
-                ))}
+                )) : (
+                  <span className="text-sm text-gray-500 italic">No locations available</span>
+                )}
               </div>
             </div>
           </CardBody>
@@ -234,4 +239,3 @@ export const IncidentFilters: React.FC = () => {
     </div>
   );
 };
-

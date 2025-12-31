@@ -59,6 +59,14 @@ export const SeverityDistributionChart: React.FC<SeverityDistributionChartProps>
     };
   };
 
+  if (rows.length === 0) {
+    return (
+      <div className="h-80 flex flex-col items-center justify-center text-slate-400">
+        <p className="text-sm">No severity data available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-80 overflow-auto">
       <table className="w-full border-collapse text-center">

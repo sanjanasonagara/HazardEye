@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Incident, Priority, User } from '../types';
+import { Incident, Priority } from '../types';
 import { useApp } from '../context/AppContext';
 import { Modal } from './UI/Modal';
 import { Button } from './UI/Button';
 import { format } from 'date-fns';
+import { useLocations } from '../../shared/context/LocationContext';
 
 interface TaskAssignmentModalProps {
   incident: Incident;
@@ -15,6 +16,8 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
   onClose,
 }) => {
   const { state, addTask } = useApp();
+  const { locations } = useLocations();
+
   const [formData, setFormData] = useState({
     description: `Address ${incident.department} issue: ${incident.description}`,
     area: incident.area,
@@ -29,7 +32,7 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const assignedUser = state.users.find(u => u.id === formData.assignedTo);
     if (!assignedUser) return;
 
@@ -77,13 +80,23 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Area *
             </label>
-            <input
-              type="text"
+            <select
               value={formData.area}
               onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
+            >
+              <option value="">Select Area</option>
+              {/* Fallback option if current incident area is not in active locations */}
+              {!locations.some(l => l.name === formData.area && l.active) && formData.area && (
+                <option value={formData.area}>{formData.area} (Historical)</option>
+              )}
+              {locations.filter(l => l.active).map(l => (
+                <option key={l.id} value={l.name}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -180,4 +193,3 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
     </Modal>
   );
 };
-

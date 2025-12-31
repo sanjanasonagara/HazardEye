@@ -3,7 +3,7 @@ import { Download, FileText, ShieldCheck, CheckCircle2, Search, Settings, Power,
 import { Card, CardHeader, CardBody } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { format } from 'date-fns';
-import { mockSafetyResources } from '../data/mockData';
+const mockSafetyResources: any[] = [];
 
 const IconMap = {
     ShieldCheck: <ShieldCheck size={20} color="#2563eb" />, // blue-600

@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, User, Filter, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useLocations } from '../../shared/context/LocationContext';
 import { Card, CardBody } from '../components/UI/Card';
 import { Badge } from '../components/UI/Badge';
 import { Button } from '../components/UI/Button';
 import { Modal } from '../components/UI/Modal';
 import { TaskStatus, Priority } from '../types';
-import { AREA_OPTIONS, PLANT_OPTIONS } from '../data/mockData';
+const PLANT_OPTIONS = ['Refinery A', 'Refinery B', 'Chemical Plant C'];
 import { format } from 'date-fns';
 
 const statuses: TaskStatus[] = ['Open', 'In Progress', 'Completed', 'Delayed'];
@@ -334,6 +335,7 @@ interface CreateTaskModalProps {
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) => {
   const { state, addTask } = useApp();
+  const { locations } = useLocations();
   const employeeUsers = state.users.filter(u => u.role === 'employee');
   const defaultAssignee = employeeUsers[0];
 
@@ -408,9 +410,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) =>
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">Select area...</option>
-              {AREA_OPTIONS.map(area => (
-                <option key={area} value={area}>
-                  {area}
+              {locations.filter(l => l.active).map(loc => (
+                <option key={loc.id} value={loc.name}>
+                  {loc.name}
                 </option>
               ))}
             </select>

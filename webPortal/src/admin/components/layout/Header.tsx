@@ -1,19 +1,36 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Bell, User, Search, ShieldAlert } from 'lucide-react';
 
 import {
     LayoutDashboard,
-    BarChart3,
     FileText,
     Files,
     BookOpen,
     LogOut,
-
+    RefreshCw,
 } from 'lucide-react';
 
 const Header = () => {
+    const navigate = useNavigate();
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+    const [user, setUser] = React.useState<{ name: string; email: string; role: string } | null>(null);
+
+    React.useEffect(() => {
+        try {
+            const stored = localStorage.getItem('user');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                setUser({
+                    name: parsed.firstName && parsed.lastName ? `${parsed.firstName} ${parsed.lastName}` : parsed.name || 'Admin User',
+                    email: parsed.email || 'admin@hazardeye.com',
+                    role: parsed.role || 'Admin'
+                });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, []);
 
     // Close dropdown when clicking outside (simple implementation)
     React.useEffect(() => {
@@ -144,8 +161,8 @@ const Header = () => {
                             }}
                         >
                             <div style={{ textAlign: 'right' }} className="hidden sm:block">
-                                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#e2e8f0' }}>Admin User</p>
-                                <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Super Admin</p>
+                                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#e2e8f0' }}>{user?.name || 'Admin User'}</p>
+                                <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{user?.role || 'Super Admin'}</p>
                             </div>
                             <div style={{
                                 width: '36px',
@@ -178,8 +195,8 @@ const Header = () => {
                                 zIndex: 100
                             }}>
                                 <div style={{ padding: '1rem', borderBottom: '1px solid #f1f5f9' }}>
-                                    <p style={{ fontWeight: 600, fontSize: '1rem', color: '#0f172a' }}>Admin User</p>
-                                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>admin@hazardeye.com</p>
+                                    <p style={{ fontWeight: 600, fontSize: '1rem', color: '#0f172a' }}>{user?.name || 'Admin User'}</p>
+                                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>{user?.email || 'admin@hazardeye.com'}</p>
                                 </div>
                                 <div style={{ padding: '0.5rem' }}>
                                     <NavLink
@@ -204,8 +221,9 @@ const Header = () => {
                                     </NavLink>
                                     <button
                                         onClick={() => {
-                                            alert('Signed out successfully');
-                                            setIsProfileOpen(false);
+                                            localStorage.removeItem('token');
+                                            localStorage.removeItem('user');
+                                            navigate('/login');
                                         }}
                                         style={{
                                             width: '100%',
@@ -227,6 +245,34 @@ const Header = () => {
                                     >
                                         <LogOut size={16} />
                                         Sign Out
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem('token');
+                                            localStorage.removeItem('user');
+                                            navigate('/login');
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            padding: '0.75rem 1rem',
+                                            color: '#334155',
+                                            background: 'none',
+                                            border: 'none',
+                                            fontSize: '0.875rem',
+                                            borderRadius: '0.25rem',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'background-color 0.2s',
+                                            borderTop: '1px solid #f1f5f9'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <RefreshCw size={16} />
+                                        Switch Account
                                     </button>
                                 </div>
                             </div>

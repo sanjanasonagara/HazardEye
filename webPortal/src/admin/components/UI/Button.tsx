@@ -1,12 +1,18 @@
 import React from 'react';
 
-export const Button = ({
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: 'primary' | 'secondary' | 'danger' | 'outline';
+    size?: 'sm' | 'md' | 'lg';
+    isLoading?: boolean;
+}
+
+export const Button: React.FC<ButtonProps> = ({
     variant = 'primary',
     size = 'md',
     isLoading = false,
     children,
     className = '',
-    disabled,
+    disabled = false,
     ...props
 }) => {
     const baseStyle = {

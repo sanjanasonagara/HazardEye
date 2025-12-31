@@ -1,398 +1,312 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Search,
-    Trash2,
-    RotateCcw,
-    User as UserIcon,
     CheckCircle2,
     XCircle,
     History,
     AlertCircle,
-    ChevronDown
+    Shield,
+    Briefcase,
+    X
 } from 'lucide-react';
 import './UserManagement.css';
 
+// --- Interfaces ---
+
 interface User {
-    id: string;
+    id: number;
     name: string;
     email: string;
-    role: string;
-    department: string;
-    status: string;
-    lastActive: string;
-    lastActiveDate: Date;
-    isDeleted: boolean;
-    avatarInitials: string;
+    employeeId: string;
+    isActive: boolean;
+    lastLoginAt: string;
+    createdAt: string;
+    isAdmin: boolean;
+    isSupervisor: boolean;
+    isEmployee: boolean;
+    supervisorDepartments: string[];
+    supervisorDepartmentIds: number[];
+    phone?: string;
+    company?: string;
+}
+
+
+
+interface Department {
+    id: number;
+    name: string;
 }
 
 interface AuditEntry {
-    id: string;
-    actionType: string;
-    description: string;
-    affectedUserId: string;
-    previousState: any;
-    timestamp: Date;
-    reversible: boolean;
-    undone: boolean;
+    id: number;
+    action: string;
+    entityType: string;
+    entityId: number;
+    details: any;
+    timestamp: string;
+    user: { name: string } | null;
 }
 
-// --- Mock Data Generator ---
+// --- API Helpers ---
+// Ideally these move to a service file
 
-const AVAILABLE_DEPARTMENTS = ['Safety', 'Operations', 'Maintenance', 'Fire & Security', 'Management'];
+const API_BASE = 'http://localhost:5200/api';
 
-const INITIAL_USERS = [
-    {
-        id: '1',
-        name: 'Sanjana',
-        email: 'sanjana@hazardeye.com',
-        role: 'ADMIN',
-        department: 'Management',
-        status: 'ACTIVE',
-        lastActive: 'Just now',
-        lastActiveDate: new Date(),
-        isDeleted: false,
-        avatarInitials: 'S'
-    },
-    {
-        id: '2',
-        name: 'ankit',
-        email: 'ankit@hazardeye.com',
-        role: 'EMPLOYEE',
-        department: 'Safety',
-        status: 'ACTIVE',
-        lastActive: '5 mins ago',
-        lastActiveDate: new Date(Date.now() - 5 * 60000),
-        isDeleted: false,
-        avatarInitials: 'A'
-    },
-    {
-        id: '3',
-        name: 'lavanya ',
-        email: 'lavanya@hazardeye.com',
-        role: 'FIELD WORKER',
-        department: 'Operations',
-        status: 'ACTIVE',
-        lastActive: '1 hour ago',
-        lastActiveDate: new Date(Date.now() - 60 * 60000),
-        isDeleted: false,
-        avatarInitials: 'L'
-    },
-    {
-        id: '4',
-        name: 'hemani',
-        email: 'hemani@hazardeye.com',
-        role: 'FIELD WORKER',
-        department: 'Fire & Security',
-        status: 'DISABLED',
-        lastActive: '2 days ago',
-        lastActiveDate: new Date(Date.now() - 2 * 24 * 60 * 60000),
-        isDeleted: false,
-        avatarInitials: 'H'
-    },
-    {
-        id: '5',
-        name: 'kartik',
-        email: 'kartik@hazardeye.com',
-        role: 'EMPLOYEE',
-        department: 'Maintenance',
-        status: 'ACTIVE',
-        lastActive: 'Yesterday',
-        lastActiveDate: new Date(Date.now() - 24 * 60 * 60000),
-        isDeleted: false,
-        avatarInitials: 'K'
-    },
-
-];
-
-// --- Helpers ---
-
-const timeAgo = (date: Date) => {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    let interval = Math.floor(seconds / 31536000);
-    if (interval > 1) return interval + "y ago";
-    interval = Math.floor(seconds / 2592000);
-    if (interval > 1) return interval + "mo ago";
-    interval = Math.floor(seconds / 86400);
-    if (interval > 1) return interval + "d ago";
-    interval = Math.floor(seconds / 3600);
-    if (interval > 1) return interval + "h ago";
-    interval = Math.floor(seconds / 60);
-    if (interval > 1) return interval + "m ago";
-    return Math.floor(seconds) + "s ago";
-};
-
-// --- Custom Components ---
-
-const CustomDropdown = ({ options, value, onChange, placeholder = "Select..." }: {
-    options: string[];
-    value: string;
-    onChange: (val: string) => void;
-    placeholder?: string;
-}) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !(dropdownRef.current as HTMLDivElement).contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-        <div className="custom-select-container" ref={dropdownRef}>
-            <div
-                className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <span>{value || placeholder}</span>
-                <ChevronDown size={14} className="text-gray-400" />
-            </div>
-            {isOpen && (
-                <div className="custom-dropdown-menu">
-                    {options.map((option) => (
-                        <button
-                            key={option}
-                            className={`custom-dropdown-item ${value === option ? 'selected' : ''}`}
-                            onClick={() => {
-                                onChange(option);
-                                setIsOpen(false);
-                            }}
-                        >
-                            {option}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
 };
 
 // --- Main Component ---
 
 const UserManagement = () => {
     // State
-    const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+    const [users, setUsers] = useState<User[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
     const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Filters State
+    // Filter State
+    const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('All');
-    const [deptFilter, setDeptFilter] = useState('All');
-    const [statusFilter, setStatusFilter] = useState('All');
-    const [lastActiveFilter, setLastActiveFilter] = useState('All');
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [modalForm, setModalForm] = useState({
+        isAdmin: false,
+        isSupervisor: false,
+        selectedDeptIds: [] as number[]
+    });
+
+    // --- Data Fetching ---
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [usersRes, deptsRes] = await Promise.all([
+                fetch(`${API_BASE}/users`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE}/departments`, { headers: getAuthHeaders() })
+            ]);
+
+            if (usersRes.ok) {
+                const usersData = await usersRes.json();
+                setUsers(usersData);
+            } else {
+                console.error("Failed to fetch users", usersRes.status);
+                if (usersRes.status === 401 || usersRes.status === 403) {
+                    setError("Unauthorized: Please log out and log in again.");
+                } else {
+                    setError(`Failed to load users (Status: ${usersRes.status})`);
+                }
+            }
+
+            if (deptsRes.ok) {
+                const deptsData = await deptsRes.json();
+                setDepartments(deptsData);
+            }
+
+            // Fetch Audit Logs (Optional/Separate)
+            const auditRes = await fetch(`${API_BASE}/audit`, { headers: getAuthHeaders() });
+            if (auditRes.ok) {
+                const auditData = await auditRes.json();
+                setAuditLog(auditData);
+            }
+
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load data.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     // --- Actions ---
 
-    const addAuditEntry = (
-        actionType: string,
-        description: string,
-        affectedUserId: string,
-        previousState: any
-    ) => {
-        const newEntry = {
-            id: Math.random().toString(36).substr(2, 9),
-            actionType,
-            description,
-            affectedUserId,
-            previousState,
-            timestamp: new Date(),
-            reversible: true,
-            undone: false,
-        };
-        setAuditLog(prev => [newEntry, ...prev]);
-    };
+    const handleOpenPermissions = (user: User) => {
+        setSelectedUser(user);
 
-    const updateUser = (id: string, updates: Partial<User>, actionType: string, baseDescription: string) => {
-        const user = users.find(u => u.id === id);
-        if (!user) return;
+        // Use IDs directly from backend DTO, fallback to empty array if undefined
+        const currentDeptIds = user.supervisorDepartmentIds || [];
 
-        const previousState: Record<string, any> = {};
-        Object.keys(updates).forEach(key => {
-            previousState[key] = (user as any)[key];
+        setModalForm({
+            isAdmin: user.isAdmin,
+            isSupervisor: user.isSupervisor,
+            selectedDeptIds: currentDeptIds
         });
-
-        // Format: "Action for User Name: description"
-        const fullDescription = `Action for ${user.name}: ${baseDescription}`;
-
-        addAuditEntry(actionType, fullDescription, id, previousState);
-
-        setUsers(prevUsers =>
-            prevUsers.map(u => (u.id === id ? { ...u, ...updates } : u))
-        );
+        setIsModalOpen(true);
     };
 
-    const handleRoleChange = (userId: string, newRole: string) => {
-        updateUser(userId, { role: newRole }, 'ROLE_CHANGE', `Role changed to ${newRole}`);
+    const handleSavePermissions = async () => {
+        if (!selectedUser) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${selectedUser.id}/permissions`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    isAdmin: modalForm.isAdmin,
+                    isSupervisor: modalForm.isSupervisor,
+                    supervisorDepartmentIds: modalForm.selectedDeptIds
+                })
+            });
+
+            if (!res.ok) {
+                let errMsg = `Error ${res.status}: ${res.statusText}`;
+                try {
+                    const text = await res.text();
+                    if (text) {
+                        const json = JSON.parse(text);
+                        errMsg = json.message || errMsg;
+                        if (json.details) errMsg += `\n${json.details}`;
+                    }
+                } catch (e) { }
+
+                if (res.status === 401 || res.status === 403) {
+                    errMsg = "Access Denied. Please log out and log back in to refresh your permissions.";
+                }
+
+                alert(errMsg);
+                return;
+            }
+
+            // Success
+            setIsModalOpen(false);
+            await fetchData(); // Refresh list to get audit log & updates
+            alert('Permissions updated successfully.');
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred. Please check console.');
+        }
     };
 
-    const handleDeptChange = (userId: string, newDept: string) => {
-        updateUser(userId, { department: newDept }, 'DEPARTMENT_CHANGE', `Department changed to ${newDept}`);
+    const handleToggleStatus = async (user: User) => {
+        if (!confirm(`Are you sure you want to ${user.isActive ? 'disable' : 'enable'} ${user.name}?`)) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${user.id}/status`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    isActive: !user.isActive
+                })
+            });
+
+            if (!res.ok) {
+                let errMsg = `Error ${res.status}: ${res.statusText}`;
+                try {
+                    const text = await res.text();
+                    if (text) {
+                        const json = JSON.parse(text);
+                        errMsg = json.message || errMsg;
+                        if (json.details) errMsg += `\n${json.details}`;
+                    }
+                } catch (e) { }
+
+                if (res.status === 401 || res.status === 403) {
+                    errMsg = "Access Denied. Please log out and log back in to refresh your permissions.";
+                }
+
+                alert(errMsg);
+                return;
+            }
+
+            await fetchData();
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred.');
+        }
     };
 
-    const handleStatusToggle = (user: User) => {
-        const newStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-        updateUser(user.id, { status: newStatus }, 'STATUS_CHANGE', `Status changed to ${newStatus}`);
-    };
-
-    const handleDelete = (userId: string) => {
-        updateUser(userId, { isDeleted: true }, 'DELETE', 'User soft deleted');
-    };
-
-    const handleUndo = (auditId: string) => {
-        const logEntry = auditLog.find(l => l.id === auditId);
-        if (!logEntry || logEntry.undone || !logEntry.reversible) return;
-
-        // Apply previous state
-        setUsers(prevUsers =>
-            prevUsers.map(u =>
-                u.id === logEntry.affectedUserId
-                    ? { ...u, ...logEntry.previousState }
-                    : u
-            )
-        );
-        setAuditLog(prevLog => {
-            const updatedLog = prevLog.map(l => l.id === auditId ? { ...l, undone: true, reversible: false } : l);
-
-            const distinctUndoEntry = {
-                id: Math.random().toString(36).substr(2, 9),
-                actionType: logEntry.actionType,
-                description: `Undo: ${logEntry.description}`,
-                affectedUserId: logEntry.affectedUserId,
-                previousState: {},
-                timestamp: new Date(),
-                reversible: false,
-                undone: false,
-            };
-
-            return [distinctUndoEntry, ...updatedLog];
-        });
-    };
-
-    // --- Filtering Logic ---
+    // --- Filtering ---
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
-            if (user.isDeleted) return false;
-
             // Search
             const matchesSearch =
                 user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchQuery.toLowerCase());
-
+                user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (user.employeeId && user.employeeId.toLowerCase().includes(searchQuery.toLowerCase()));
             if (!matchesSearch) return false;
 
-            // Type filters
-            if (roleFilter !== 'All' && user.role !== roleFilter) return false;
-            if (deptFilter !== 'All' && user.department !== deptFilter) return false;
-            if (statusFilter !== 'All' && user.status !== statusFilter) return false;
-
-            // Last Active
-            if (lastActiveFilter !== 'All') {
-                const now = new Date();
-                const diffHours = (now.getTime() - user.lastActiveDate.getTime()) / (1000 * 60 * 60);
-
-                if (lastActiveFilter === '24h' && diffHours > 24) return false;
-                if (lastActiveFilter === '7d' && diffHours > 24 * 7) return false;
-                if (lastActiveFilter === 'Inactive' && diffHours <= 24 * 7) return false;
-            }
+            // Role Filter
+            if (roleFilter === 'ADMIN' && !user.isAdmin) return false;
+            if (roleFilter === 'SUPERVISOR' && !user.isSupervisor) return false;
+            if (roleFilter === 'EMPLOYEE_ONLY' && (user.isAdmin || user.isSupervisor)) return false;
 
             return true;
         });
-    }, [users, searchQuery, roleFilter, deptFilter, statusFilter, lastActiveFilter]);
+    }, [users, searchQuery, roleFilter]);
+
+
+    // --- Render ---
 
     return (
         <div className="user-management-container">
             <div className="page-header">
                 <div className="page-title">
-                    <h1>User Management</h1>
-                    <p>Manage system access, roles, and departments</p>
+                    <h1>User Management & Governance</h1>
+                    <p>Manage system authority, responsibilities, and access controls</p>
                 </div>
+                <button className="btn-primary" onClick={fetchData} style={{ padding: '8px 16px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    Refresh Data
+                </button>
             </div>
 
-            {/* --- Filters & Search --- */}
+            {/* --- Filters --- */}
             <div className="filters-card">
                 <div className="filters-layout">
-
-                    {/* Search */}
                     <div className="search-container">
                         <Search className="search-icon" />
                         <input
                             type="text"
-                            placeholder="Search users..."
+                            placeholder="Search by name or email..."
                             className="search-input"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
                     </div>
-
-                    {/* Filters Group */}
                     <div className="filters-group">
-                        {/* Role */}
                         <select
                             className="filter-select"
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
                         >
-                            <option value="All">All Roles</option>
-                            <option value="ADMIN">Admin</option>
-                            <option value="EMPLOYEE">Employee</option>
-                            <option value="FIELD_WORKER">Field Worker</option>
-                        </select>
-
-                        {/* Department */}
-                        <select
-                            className="filter-select"
-                            value={deptFilter}
-                            onChange={(e) => setDeptFilter(e.target.value)}
-                        >
-                            <option value="All">All Departments</option>
-                            {AVAILABLE_DEPARTMENTS.map(d => (
-                                <option key={d} value={d}>{d}</option>
-                            ))}
-                        </select>
-
-                        {/* Status */}
-                        <select
-                            className="filter-select"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="All">All Status</option>
-                            <option value="ACTIVE">Active</option>
-                            <option value="DISABLED">Disabled</option>
-                        </select>
-
-                        {/* Last Active */}
-                        <select
-                            className="filter-select"
-                            value={lastActiveFilter}
-                            onChange={(e) => setLastActiveFilter(e.target.value)}
-                        >
-                            <option value="All">Any Time</option>
-                            <option value="24h">Last 24 Hours</option>
-                            <option value="7d">Last 7 Days</option>
-                            <option value="Inactive">Inactive (7+ Days)</option>
+                            <option value="All">All Users</option>
+                            <option value="ADMIN">Admins</option>
+                            <option value="SUPERVISOR">Supervisors</option>
+                            <option value="EMPLOYEE_ONLY">Employees Only</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            {/* --- Users Table --- */}
+            {error && (
+                <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                    {error}
+                </div>
+            )}
+
+            {/* --- Table --- */}
             <div className="table-card">
                 <div className="table-responsive">
                     <table className="users-table">
                         <thead>
                             <tr>
-                                <th>Name / Email</th>
-                                <th>Role</th>
-                                <th>Department</th>
+                                <th>Identity</th>
+                                <th>Contact & Dept</th>
+                                <th>Role & Responsibilities</th>
+                                <th>Assigned Scope (Sup.)</th>
                                 <th>Status</th>
-                                <th>Last Active</th>
                                 <th align="right">Actions</th>
                             </tr>
                         </thead>
@@ -403,58 +317,89 @@ const UserManagement = () => {
                                         <td>
                                             <div className="user-info">
                                                 <div className="avatar-initials">
-                                                    {user.avatarInitials}
+                                                    {user.name.charAt(0)}
                                                 </div>
                                                 <div className="user-text">
                                                     <h4>{user.name}</h4>
-                                                    <span>{user.email}</span>
+                                                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+                                                        <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0 4px', borderRadius: '4px' }}>
+                                                            {user.employeeId || 'NO-ID'}
+                                                        </span>
+                                                        <span>{user.email}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <CustomDropdown
-                                                options={['ADMIN', 'EMPLOYEE', 'FIELD_WORKER']}
-                                                value={user.role}
-                                                onChange={(val) => handleRoleChange(user.id, val)}
-                                            />
+                                            <div style={{ fontSize: '0.875rem' }}>
+                                                <div style={{ fontWeight: 500, color: '#334155' }}>
+                                                    {user.company || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>No Dept</span>}
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                    {user.phone || '—'}
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>
-                                            <CustomDropdown
-                                                options={AVAILABLE_DEPARTMENTS}
-                                                value={user.department}
-                                                onChange={(val) => handleDeptChange(user.id, val)}
-                                            />
+                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                <span className="status-badge" style={{ backgroundColor: '#e2e8f0', color: '#475569' }}>Employee</span>
+                                                {user.isSupervisor && (
+                                                    <span className="status-badge" style={{ backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#bfdbfe' }}>
+                                                        <Briefcase size={10} style={{ marginRight: 4 }} /> Supervisor
+                                                    </span>
+                                                )}
+                                                {user.isAdmin && (
+                                                    <span className="status-badge" style={{ backgroundColor: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }}>
+                                                        <Shield size={10} style={{ marginRight: 4 }} /> Admin
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td>
-                                            <span className={`status-badge ${user.status === 'ACTIVE'
-                                                ? 'status-active'
-                                                : 'status-disabled'
-                                                }`}>
-                                                {user.status === 'ACTIVE' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                                                {user.status === 'ACTIVE' ? 'Active' : 'Disabled'}
+                                            {user.isSupervisor ? (
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                    {user.supervisorDepartments.length > 0
+                                                        ? user.supervisorDepartments.join(', ')
+                                                        : <span style={{ color: '#ef4444' }}>No Scope Assigned</span>}
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#cbd5e1' }}>—</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <span className={`status-badge ${user.isActive ? 'status-active' : 'status-disabled'}`}>
+                                                {user.isActive ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                                                {user.isActive ? 'Active' : 'Disabled'}
                                             </span>
-                                        </td>
-                                        <td style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                                            {user.lastActive}
                                         </td>
                                         <td>
                                             <div className="actions-cell">
                                                 <button
-                                                    onClick={() => handleStatusToggle(user)}
-                                                    className={`action-btn ${user.status === 'ACTIVE'
-                                                        ? 'btn-toggle-active'
-                                                        : 'btn-toggle-inactive'
-                                                        }`}
-                                                    title={user.status === 'ACTIVE' ? "Disable User" : "Enable User"}
+                                                    onClick={() => handleOpenPermissions(user)}
+                                                    title="Manage Permissions"
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 600,
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #cbd5e1',
+                                                        backgroundColor: 'white',
+                                                        color: '#475569',
+                                                        cursor: 'pointer',
+                                                        marginRight: '8px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px'
+                                                    }}
                                                 >
-                                                    {user.status === 'ACTIVE' ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+                                                    Manage Access
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(user.id)}
-                                                    className="action-btn btn-delete"
-                                                    title="Delete User"
+                                                    onClick={() => handleToggleStatus(user)}
+                                                    className={`action-btn ${user.isActive ? 'btn-toggle-inactive' : 'btn-toggle-active'}`}
+                                                    title={user.isActive ? "Disable Access" : "Enable Access"}
                                                 >
-                                                    <Trash2 size={16} />
+                                                    {user.isActive ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
                                                 </button>
                                             </div>
                                         </td>
@@ -462,10 +407,8 @@ const UserManagement = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="empty-state">
-                                        <UserIcon size={48} style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.3 }} />
-                                        <p className="text-lg font-medium">No users found</p>
-                                        <p className="text-sm">Try adjusting your search or filters</p>
+                                    <td colSpan={5} className="empty-state">
+                                        {loading ? "Loading users..." : "No users found matching your filters."}
                                     </td>
                                 </tr>
                             )}
@@ -474,11 +417,133 @@ const UserManagement = () => {
                 </div>
             </div>
 
+            {/* --- Permissions Modal --- */}
+            {isModalOpen && selectedUser && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white', borderRadius: '8px', padding: '24px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                        position: 'relative'
+                    }}>
+                        <button
+                            onClick={() => setIsModalOpen(false)}
+                            style={{ position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '4px' }}>Manage Access</h2>
+                        <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '24px' }}>
+                            Configure responsibilities for <strong>{selectedUser.name}</strong> <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0 4px', borderRadius: '4px' }}>{selectedUser.employeeId}</span>
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Admin Toggle */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: modalForm.isAdmin ? '#fffbeb' : 'white' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ padding: '8px', backgroundColor: '#fef3c7', borderRadius: '6px', color: '#d97706' }}>
+                                        <Shield size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>System Administrator</h4>
+                                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Full access to all settings</p>
+                                    </div>
+                                </div>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={modalForm.isAdmin}
+                                        onChange={e => setModalForm({ ...modalForm, isAdmin: e.target.checked })}
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                </label>
+                            </div>
+
+                            {/* Supervisor Toggle */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: modalForm.isSupervisor ? '#eff6ff' : 'white' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ padding: '8px', backgroundColor: '#dbeafe', borderRadius: '6px', color: '#2563eb' }}>
+                                            <Briefcase size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>Safety Supervisor</h4>
+                                            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Department-specific oversight</p>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={modalForm.isSupervisor}
+                                        onChange={e => setModalForm({ ...modalForm, isSupervisor: e.target.checked })}
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                </div>
+
+                                {modalForm.isSupervisor && (
+                                    <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+                                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '8px', textTransform: 'uppercase' }}>
+                                            Assigned Departments (Scope)
+                                        </label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                            {departments.map(dept => (
+                                                <label key={dept.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={modalForm.selectedDeptIds.includes(dept.id)}
+                                                        onChange={e => {
+                                                            const isChecked = e.target.checked;
+                                                            setModalForm(prev => ({
+                                                                ...prev,
+                                                                selectedDeptIds: isChecked
+                                                                    ? [...prev.selectedDeptIds, dept.id]
+                                                                    : prev.selectedDeptIds.filter(id => id !== dept.id)
+                                                            }));
+                                                        }}
+                                                    />
+                                                    {dept.name}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {modalForm.selectedDeptIds.length === 0 && (
+                                            <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '8px', fontStyle: 'italic' }}>
+                                                * Check at least one department
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setIsModalOpen(false)}
+                                style={{ padding: '10px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: 'white', color: '#475569', fontWeight: 500, cursor: 'pointer' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSavePermissions}
+                                disabled={modalForm.isSupervisor && modalForm.selectedDeptIds.length === 0}
+                                style={{
+                                    padding: '10px 24px', borderRadius: '6px', border: 'none', background: '#3b82f6', color: 'white', fontWeight: 600, cursor: 'pointer',
+                                    opacity: (modalForm.isSupervisor && modalForm.selectedDeptIds.length === 0) ? 0.5 : 1
+                                }}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* --- Audit Log --- */}
             <div className="audit-log-section">
                 <h2 className="audit-title">
                     <History size={20} className="text-slate-500" />
-                    Audit Log
+                    Governance Audit Log
                 </h2>
                 <div className="audit-list">
                     {auditLog.length > 0 ? (
@@ -486,39 +551,37 @@ const UserManagement = () => {
                             {auditLog.map(entry => (
                                 <div key={entry.id} className="audit-item">
                                     <div className="audit-content">
-                                        <div className={`audit-dot ${entry.actionType === 'DELETE' ? 'dot-delete' :
-                                            entry.actionType === 'STATUS_CHANGE' ? 'dot-status' :
-                                                'dot-default'
-                                            }`} />
+                                        <div className="audit-dot dot-default" />
                                         <div className="audit-text">
                                             <p>
-                                                {entry.description}
-                                            </p>
-                                            <div className="audit-meta">
-                                                by System Admin • {entry.timestamp.toLocaleTimeString()} ({timeAgo(entry.timestamp)})
-                                                {entry.undone && (
-                                                    <span className="undo-badge">Undone</span>
+                                                <span style={{ fontWeight: 600 }}>{entry.action}</span>
+                                                {entry.details?.TargetEmployeeId && (
+                                                    <span style={{ marginLeft: '8px', fontFamily: 'monospace', background: '#f1f5f9', padding: '0 4px', borderRadius: '4px', fontSize: '0.75rem' }}>
+                                                        {entry.details.TargetEmployeeId}
+                                                    </span>
                                                 )}
+                                            </p>
+                                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                                                {Object.entries(entry.details || {})
+                                                    .filter(([k]) => k !== 'TargetEmployeeId')
+                                                    .map(([k, v]) => (
+                                                        <span key={k} style={{ marginRight: '12px' }}>
+                                                            {k}: {JSON.stringify(v)}
+                                                        </span>
+                                                    ))}
+                                            </div>
+                                            <div className="audit-meta" style={{ marginTop: '4px' }}>
+                                                By {entry.user?.name || 'System'} • {new Date(entry.timestamp).toLocaleString()}
                                             </div>
                                         </div>
                                     </div>
-
-                                    {entry.reversible && !entry.undone && (
-                                        <button
-                                            onClick={() => handleUndo(entry.id)}
-                                            className="btn-undo"
-                                        >
-                                            <RotateCcw size={12} />
-                                            Undo
-                                        </button>
-                                    )}
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <div className="empty-state">
                             <AlertCircle size={32} style={{ margin: '0 auto 0.5rem', display: 'block', opacity: 0.3 }} />
-                            <div style={{ fontSize: '0.875rem' }}>No actions recorded yet.</div>
+                            <div style={{ fontSize: '0.875rem' }}>No recent governance actions logged.</div>
                         </div>
                     )}
                 </div>

@@ -20,6 +20,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  employeeId?: string;
   role: UserRole;
   department?: Department;
   avatar?: string;
@@ -36,16 +37,9 @@ export interface Incident {
   severity: Severity;
   status: IncidentStatus;
   description: string;
-  aiSummary?: string;
-  aiRecommendation?: AIRecommendation;
 }
 
-export interface AIRecommendation {
-  whatToDo: string;
-  whyItMatters: string;
-  preventiveSteps: string[];
-  riskExplanation: string;
-}
+
 
 export interface TaskDelayEntry {
   reason: string;

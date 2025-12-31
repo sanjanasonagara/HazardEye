@@ -3,221 +3,133 @@ import {
     CheckCircle2,
     Activity,
     Users,
-    ArrowUpRight,
-    ArrowDownRight,
     Lightbulb,
     AlertOctagon,
     TrendingUp,
     MapPin
 } from 'lucide-react';
-import { analyticsData, ioclGujaratRefineryPolygon } from '../data/mockData';
+
 import {
-    BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList
 } from 'recharts';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, Tooltip as MapTooltip } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix for Leaflet default marker icon in React
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
+import { useLocations } from '../../shared/context/LocationContext';
+import { DashboardMapSection } from '../../shared/components/DashboardMapSection';
+import { DashboardStatsSection } from '../../shared/components/DashboardStatsSection';
+import React from 'react';
+import { incidentService } from '../../shared/services/incidentService';
 
 const Dashboard = () => {
-    // Mock KPIs from Dashboard
-    const stats = [
-        { title: 'Total Incidents', value: '42', change: '+12%', trend: 'up', icon: AlertTriangle, color: 'text-hazard-600', bg: 'bg-hazard-50' },
-        { title: 'Active Issues', value: '5', change: '-2', trend: 'down', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { title: 'Safety Score', value: '94%', change: '+1.5%', trend: 'up', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-        { title: 'Active Users', value: '27', change: '+5', trend: 'up', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
-    ];
+    const { locations } = useLocations();
+
+    // Default Empty Data
+    const heatmapData: any[] = [];
+    const incidentsPerArea: any[] = [];
+    const incidentTrend: any[] = [];
+    const inactiveZones: any[] = [];
+
+    // Real Data State
+    const [stats, setStats] = React.useState<{ title: string; value: string | number; change: string; trend: 'up' | 'down'; icon: any; color: string; bg: string; }[]>([
+        { title: 'Total Incidents', value: '-', change: '...', trend: 'up', icon: AlertTriangle, color: 'text-hazard-600', bg: 'bg-hazard-50' },
+        { title: 'Active Issues', value: '-', change: '...', trend: 'down', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { title: 'Safety Score', value: '-', change: '...', trend: 'up', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+        { title: 'Active Users', value: '-', change: '...', trend: 'up', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
+    ]);
+
+    React.useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const incidents = await incidentService.getIncidents();
+                const total = incidents.length;
+                const active = incidents.filter(i => i.status !== 'Resolved').length;
+                // Simple score calculation based on active incidents
+                const score = Math.max(0, 100 - (active * 5));
+
+                setStats([
+                    { title: 'Total Incidents', value: total.toString(), change: '+0%', trend: 'up', icon: AlertTriangle, color: 'text-hazard-600', bg: 'bg-hazard-50' },
+                    { title: 'Active Issues', value: active.toString(), change: '+0%', trend: 'down', icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { title: 'Safety Score', value: `${score}%`, change: '+0%', trend: 'up', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+                    { title: 'Active Users', value: '27', change: '+0%', trend: 'up', icon: Users, color: 'text-slate-600', bg: 'bg-slate-100' },
+                ]);
+            } catch (err) {
+                console.error("Failed to load dashboard stats", err);
+            }
+        };
+        fetchStats();
+    }, []);
 
     return (
         <div className="space-y-6">
 
             {/* SECTION 1: STATS GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => {
-                    const isHazard = stat.bg === 'bg-hazard-50';
-                    const isBlue = stat.bg === 'bg-blue-50';
-                    const isGreen = stat.bg === 'bg-green-50';
-
-                    let background = isHazard ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' :
-                        isBlue ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' :
-                            isGreen ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
-                                'white';
-
-                    let textColor = background === 'white' ? 'var(--color-text-main)' : 'white';
-                    let subTextColor = background === 'white' ? '#64748b' : 'rgba(255, 255, 255, 0.8)';
-                    let iconColor = background === 'white' ? '#475569' : 'white';
-
-                    return (
-                        <div key={index} className="card" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            background: background,
-                            color: textColor,
-                            border: 'none',
-                            borderRadius: '0.75rem',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            boxShadow: background === 'white'
-                                ? '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-                                : '0 10px 20px -5px rgba(0, 0, 0, 0.3), 0 8px 16px -8px rgba(0, 0, 0, 0.3)',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                if (background !== 'white') {
-                                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                if (background !== 'white') {
-                                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)';
-                                } else {
-                                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-                                }
-                            }}
-                        >
-                            <div className="flex justify-between items-start" style={{ position: 'relative', zIndex: 10, padding: '0.75rem 0.75rem 0 0.75rem' }}>
-                                <div>
-                                    <p className="text-sm font-medium" style={{ color: subTextColor }}>{stat.title}</p>
-                                    <div className="text-3xl font-bold" style={{ marginTop: '0.25rem' }}>{stat.value}</div>
-                                </div>
-                                <div style={{
-                                    padding: '0.75rem',
-                                    borderRadius: '12px',
-                                    background: background === 'white' ? 'var(--color-bg-body)' : 'rgba(255, 255, 255, 0.2)',
-                                    backdropFilter: background === 'white' ? 'none' : 'blur(4px)',
-                                }}>
-                                    <stat.icon size={28} color={iconColor} />
-                                </div>
-                            </div>
-
-                            <div style={{ padding: '0 0.75rem 0.75rem 0.75rem', display: 'flex', alignItems: 'center', fontSize: '1rem', position: 'relative', zIndex: 10 }}>
-                                {stat.trend === 'up' ? (
-                                    <ArrowUpRight size={16} color={background === 'white' ? 'var(--color-success)' : 'white'} style={{ marginRight: '0.25rem' }} />
-                                ) : (
-                                    <ArrowDownRight size={16} color={background === 'white' ? 'var(--color-danger)' : 'white'} style={{ marginRight: '0.25rem' }} />
-                                )}
-                                <span style={{ fontWeight: 600, color: background === 'white' ? (stat.trend === 'up' ? 'var(--color-success)' : 'var(--color-danger)') : 'white' }}>
-                                    {stat.change}
-                                </span>
-                                <span style={{ marginLeft: '0.5rem', color: subTextColor, fontSize: '0.75rem', fontWeight: 500 }}>vs last month</span>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            <DashboardStatsSection stats={stats} />
 
             {/* SECTION 2: MAP & INCIDENTS BY AREA (Side-by-Side) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Map */}
-                <div className="card flex-shadow">
-                    <h3 className="text-lg font-bold text-slate-800" style={{ marginBottom: '1rem' }}>Live Incident Map</h3>
-                    <div style={{ height: '24rem', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                        <MapContainer center={[22.373, 73.112]} zoom={14} style={{ height: '100%', width: '100%' }}>
-                            <TileLayer
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            />
-                            <Polygon pathOptions={{ color: 'blue', fillOpacity: 0.1 }} positions={ioclGujaratRefineryPolygon} />
-                            {analyticsData.heatmapData.map((zone, idx) => {
-                                const totalReports = zone.high + zone.medium + zone.low;
-                                return (
-                                    <Marker key={idx} position={[zone.lat, zone.lng] as L.LatLngExpression}>
-                                        <MapTooltip permanent direction="top" offset={[0, -20]} className="font-bold text-slate-700">
-                                            <div className="text-center">
-                                                <div className="text-sm font-bold">{zone.area}</div>
-                                                <div className="text-xs">Reports: {totalReports}</div>
-                                            </div>
-                                        </MapTooltip>
-                                        <Popup>
-                                            <div className="text-sm">
-                                                <strong className="block mb-1">{zone.area}</strong>
-                                                <div className="flex gap-2">
-                                                    <span className="text-red-600 font-bold">H: {zone.high}</span>
-                                                    <span className="text-orange-500 font-medium">M: {zone.medium}</span>
-                                                    <span className="text-blue-500">L: {zone.low}</span>
-                                                </div>
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                );
-                            })}
-                        </MapContainer>
-                    </div>
-                </div>
-
-                {/* Incidents by Area Chart */}
-                <div className="card flex-shadow" style={{ borderRadius: '0.75rem' }}>
-                    <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem' }}>
-                        <h3 className="text-lg font-bold text-slate-800">Incidents Overview by Area</h3>
-                        <select className="custom-select">
-                            <option>Last 7 Days</option>
-                            <option>Last 30 Days</option>
-                        </select>
-                    </div>
-                    <div style={{ height: '24rem' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={analyticsData.incidentsPerArea} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} interval={0} angle={-45} textAnchor="end" height={60} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={50}>
-                                    <LabelList dataKey="count" position="top" style={{ fill: '#3b82f6', fontSize: '12px', fontWeight: 'bold' }} />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
+            <DashboardMapSection
+                locations={locations}
+                getMapStats={(loc) => {
+                    // Try to match stats by name, fallback to 0
+                    const stats = heatmapData.find(d => d.area === loc.name) || { high: 0, medium: 0, low: 0 };
+                    return {
+                        total: stats.high + stats.medium + stats.low,
+                        high: stats.high,
+                        medium: stats.medium,
+                        low: stats.low
+                    };
+                }}
+                chartData={locations.filter(l => l.active).map(loc => {
+                    const stat = incidentsPerArea.find(s => s.name === loc.name);
+                    return {
+                        name: loc.name,
+                        count: stat ? stat.count : 0
+                    };
+                })}
+                period="Last 7 Days"
+            />
 
             {/* SECTION 3: ANALYTICS INSIGHTS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div style={{ background: 'linear-gradient(to bottom right, #3b82f6, #2563eb)', borderRadius: '0.75rem', padding: '1.5rem', color: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', position: 'relative', overflow: 'hidden' }}>
+                {/* Insight: Improvement (Blue Family) */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #93c5fd 50%, #dbeafe 100%)',
+                    borderRadius: '0.75rem', padding: '1.5rem', color: 'white',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', position: 'relative', overflow: 'hidden'
+                }}>
                     <div style={{ position: 'relative', zIndex: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                             <Lightbulb size={20} color="#fde047" />
                             <h3 className="font-bold">Insight: Improvement</h3>
                         </div>
-                        <p style={{ fontSize: '0.875rem', color: '#dbeafe' }}>Incident reporting in "Refinery A" has improved by 15% due to new SOP implementation.</p>
+                        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.9)' }}>Incident reporting has improved due to new SOP implementation.</p>
                     </div>
                     <TrendingUp size={128} style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', color: 'white', opacity: 0.1 }} />
                 </div>
 
-                <div style={{ background: 'linear-gradient(to bottom right, #f97316, #ea580c)', borderRadius: '0.75rem', padding: '1.5rem', color: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', position: 'relative', overflow: 'hidden' }}>
+                {/* Action Required (Amber/Red Family -> Let's use Red for Action) */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #f87171 0%, #fee2e2 50%, #fef2f2 100%)',
+                    borderRadius: '0.75rem', padding: '1.5rem',
+                    color: '#991b1b', // Red-800
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', position: 'relative', overflow: 'hidden'
+                }}>
                     <div style={{ position: 'relative', zIndex: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                            <AlertOctagon size={20} color="white" />
+                            <AlertOctagon size={20} color="#b91c1c" />
                             <h3 className="font-bold">Action Required</h3>
                         </div>
-                        <p style={{ fontSize: '0.875rem', color: '#ffedd5' }}>3 zones have been inactive for more than 7 days. Check sensor connectivity.</p>
+                        <p style={{ fontSize: '0.875rem', color: '#b91c1c' }}>Check sensor connectivity in inactive zones.</p>
                     </div>
-                    <MapPin size={128} style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', color: 'white', opacity: 0.1 }} />
+                    <MapPin size={128} style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', color: '#b91c1c', opacity: 0.1 }} />
                 </div>
 
                 <div className="card flex-shadow">
                     <h3 className="font-bold text-slate-800" style={{ marginBottom: '0.75rem' }}>Inactive Reporting Zones</h3>
                     <div className="space-y-3">
-                        {analyticsData.inactiveZones.map(zone => (
+                        {inactiveZones.length > 0 ? inactiveZones.map(zone => (
                             <div key={zone.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
                                 <span className="font-medium text-slate-500">{zone.name}</span>
                                 <span style={{ padding: '0.25rem 0.5rem', backgroundColor: '#f1f5f9', color: '#64748b', borderRadius: '0.5rem', fontSize: '0.75rem' }}>{zone.lastReport}</span>
                             </div>
-                        ))}
+                        )) : <div className="text-sm text-slate-500 py-2">No inactive zones reported.</div>}
                     </div>
                 </div>
             </div>
@@ -230,7 +142,7 @@ const Dashboard = () => {
                     <h3 className="text-lg font-bold text-slate-800" style={{ marginBottom: '1.5rem' }}>Incident Trend (7 Days)</h3>
                     <div style={{ height: '20rem' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={analyticsData.incidentTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                            <AreaChart data={incidentTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -265,7 +177,7 @@ const Dashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {analyticsData.heatmapData.map((row, i) => (
+                                {heatmapData.length > 0 ? heatmapData.map((row, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                         <td style={{ textAlign: 'left', padding: '0.75rem 0.5rem', fontWeight: 600, color: '#334155', fontSize: '0.875rem' }}>{row.area}</td>
                                         <td style={{ padding: '0.5rem' }}>
@@ -284,7 +196,11 @@ const Dashboard = () => {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-4 text-slate-500 text-sm">No severity data available.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

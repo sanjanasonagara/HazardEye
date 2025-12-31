@@ -1,0 +1,94 @@
+import { fetchApi } from './api';
+import { Location } from '../types/Location';
+
+export interface LocationDto {
+    id: number;
+    name: string;
+    description: string;
+    latitude: number;
+    longitude: number;
+    polygonCoordinates?: string;
+    type?: string;
+    isActive: boolean;
+}
+
+export const locationService = {
+    getAllLocations: async (): Promise<Location[]> => {
+        try {
+            const dtos = await fetchApi<LocationDto[]>('/locations');
+            return dtos.map(mapDtoToLocation);
+        } catch (error) {
+            console.error('Failed to fetch locations:', error);
+            console.error('Failed to fetch locations:', error);
+            throw error;
+        }
+    },
+
+    getLocation: async (id: string): Promise<Location> => {
+        const dto = await fetchApi<LocationDto>(`/locations/${id}`);
+        return mapDtoToLocation(dto);
+    },
+
+    createLocation: async (location: Omit<Location, 'id'>): Promise<Location> => {
+        const dto = mapLocationToDto(location);
+        const response = await fetchApi<LocationDto>('/locations', {
+            method: 'POST',
+            body: JSON.stringify(dto)
+        });
+        return mapDtoToLocation(response);
+    },
+
+    updateLocation: async (id: string, updates: Partial<Omit<Location, 'id'>>): Promise<Location> => {
+        // Fetch existing to merge
+        const current = await locationService.getLocation(id);
+
+        // Merge updates
+        const updated: Location = {
+            ...current,
+            ...updates
+        };
+
+        // Send full update
+        return locationService.updateLocationFull(updated);
+    },
+
+    updateLocationFull: async (location: Location): Promise<Location> => {
+        const dto = mapLocationToDto(location);
+        await fetchApi(`/locations/${location.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(dto)
+        });
+        return location;
+    },
+
+    deleteLocation: async (id: string): Promise<void> => {
+        await fetchApi(`/locations/${id}`, {
+            method: 'DELETE'
+        });
+    }
+};
+
+// Helper for Fallback (Mock)
+
+
+const mapDtoToLocation = (dto: LocationDto): Location => ({
+    id: dto.id.toString(),
+    name: dto.name,
+    latitude: dto.latitude,
+    longitude: dto.longitude,
+    active: dto.isActive,
+    description: dto.description,
+    type: dto.type,
+    polygonCoordinates: dto.polygonCoordinates ? JSON.parse(dto.polygonCoordinates) : undefined
+});
+
+const mapLocationToDto = (loc: Partial<Location> & { name?: string, latitude?: number, longitude?: number }): any => ({
+    id: loc.id ? parseInt(loc.id) : 0,
+    name: loc.name,
+    description: loc.description || '',
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    isActive: loc.active !== undefined ? loc.active : true,
+    type: loc.type,
+    polygonCoordinates: loc.polygonCoordinates ? JSON.stringify(loc.polygonCoordinates) : null
+});

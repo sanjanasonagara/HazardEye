@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
 import { MainLayout } from './components/Layout/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { IncidentReports } from './pages/IncidentReports';
@@ -12,20 +11,18 @@ import { SafetyResources } from './pages/SafetyResources';
 
 function App() {
   return (
-    <AppProvider>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="incidents" element={<IncidentReports />} />
-          <Route path="incidents/:id" element={<IncidentDetail />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="tasks/:id" element={<TaskDetail />} />
-          <Route path="safety-resources" element={<SafetyResources />} />
-          <Route path="profile" element={<ProfileSettings />} />
-          <Route path="*" element={<Navigate to="/supervisor" replace />} />
-        </Route>
-      </Routes>
-    </AppProvider>
+    <Routes>
+      <Route element={<MainLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="incidents" element={<IncidentReports />} />
+        <Route path="incidents/:id" element={<IncidentDetail />} />
+        <Route path="tasks" element={<Tasks />} />
+        <Route path="tasks/:id" element={<TaskDetail />} />
+        <Route path="safety-resources" element={<SafetyResources />} />
+        <Route path="profile" element={<ProfileSettings />} />
+        <Route path="*" element={<Navigate to="/supervisor" replace />} />
+      </Route>
+    </Routes>
   );
 }
 

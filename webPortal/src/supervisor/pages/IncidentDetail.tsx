@@ -3,16 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Download,
-  AlertCircle,
   Calendar,
   Maximize2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardBody, CardHeader } from '../components/UI/Card';
+import { Card, CardBody } from '../components/UI/Card';
 import { Badge } from '../components/UI/Badge';
 import { Button } from '../components/UI/Button';
 import { Modal } from '../components/UI/Modal';
-import { AIRecommendationPanel } from '../components/AIRecommendationPanel';
+
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { generateIncidentReport } from '../utils/reportGenerator';
 import { format } from 'date-fns';
@@ -23,7 +22,7 @@ export const IncidentDetail: React.FC = () => {
   const { state, getFilteredTasks } = useApp();
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analysis' | 'tasks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks'>('overview');
 
   const incident = state.incidents.find(i => i.id === id);
   // Get tasks related to this incident
@@ -93,17 +92,7 @@ export const IncidentDetail: React.FC = () => {
           >
             Overview
           </button>
-          <button
-            onClick={() => setActiveTab('analysis')}
-            className={`
-              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-              ${activeTab === 'analysis'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-            `}
-          >
-            AI Analysis
-          </button>
+
           <button
             onClick={() => setActiveTab('tasks')}
             className={`
@@ -193,26 +182,7 @@ export const IncidentDetail: React.FC = () => {
           </Card>
         )}
 
-        {activeTab === 'analysis' && (
-          <div className="space-y-6">
-            {incident.aiSummary && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-primary-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">AI Summary</h2>
-                  </div>
-                </CardHeader>
-                <CardBody>
-                  <p className="text-gray-700 leading-relaxed">{incident.aiSummary}</p>
-                </CardBody>
-              </Card>
-            )}
-            {incident.aiRecommendation && (
-              <AIRecommendationPanel recommendation={incident.aiRecommendation} />
-            )}
-          </div>
-        )}
+
 
         {activeTab === 'tasks' && (
           <div className="space-y-4">
