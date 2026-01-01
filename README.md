@@ -2,7 +2,7 @@
 
 Hazard-Eye is a comprehensive safety management platform consisting of a localized mobile app for reporting, a web dashboard for supervisors, and a .NET backend for data processing.
 
-## 📂 Project Structure
+##  Project Structure
 
 ### 1. Backend (`/backend/HazardEye.API`)
 Built with **.NET 8 Web API**. Handles authentication, incident management, and real-time updates via SignalR.
