@@ -6,9 +6,7 @@ export interface Incident {
     id: string;
     server_id?: number; // Added server_id
     created_at: string;
-    media_uris: string; 
-    ml_metadata: string;
-    advisory: string;
+    media_uris: string;
     severity: number;
     sync_status: 'pending' | 'synced';
     status: string;
@@ -27,12 +25,14 @@ export interface Task {
     priority: 'high' | 'medium' | 'low';
     status: string;
     due_date: string;
-    comments: string; 
+    comments: string;
     area: string;
     plant: string;
     precautions: string;
     incident_id?: string;
     delay_reason?: string;
+    delayed_at?: string;
+    delay_history?: string; // JSON string of { reason: string, timestamp: string }[]
     sync_status?: 'pending' | 'synced';
 }
 
@@ -58,15 +58,15 @@ export const initDatabase = async () => {
         try {
             db = await SQLite.openDatabaseAsync('hazardeye.db');
 
+
+            await db.execAsync(`PRAGMA journal_mode = WAL;`);
+
             await db.execAsync(`
-                PRAGMA journal_mode = WAL;
                 CREATE TABLE IF NOT EXISTS incidents (
                     id TEXT PRIMARY KEY NOT NULL,
                     server_id INTEGER,
                     created_at TEXT NOT NULL,
                     media_uris TEXT,
-                    ml_metadata TEXT,
-                    advisory TEXT,
                     severity INTEGER,
                     sync_status TEXT DEFAULT 'pending',
                     status TEXT DEFAULT 'open',
@@ -74,8 +74,10 @@ export const initDatabase = async () => {
                     department TEXT,
                     area TEXT,
                     plant TEXT
-                );
-                CREATE TABLE IF NOT EXISTS tasks (
+                );`);
+
+            await db.execAsync(`
+                     CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY NOT NULL,
                     server_id INTEGER,
                     title TEXT,
@@ -90,18 +92,21 @@ export const initDatabase = async () => {
                     precautions TEXT,
                     incident_id TEXT,
                     delay_reason TEXT,
+                    delayed_at TEXT,
+                    delay_history TEXT,
                     sync_status TEXT DEFAULT 'pending'
-                );
+                );`);
+
+            await db.execAsync(`
                 CREATE TABLE IF NOT EXISTS devices (
                     id TEXT PRIMARY KEY NOT NULL,
                     name TEXT,
-                    model TEXT,
+                    
                     station TEXT,
                     last_sync TEXT,
                     battery_level INTEGER,
-                    storage_used TEXT,
-                    model_version TEXT,
-                    model_updated TEXT
+                    storage_used TEXT
+                    
                 );
             `);
 
@@ -119,6 +124,8 @@ export const initDatabase = async () => {
                 'ALTER TABLE tasks ADD COLUMN precautions TEXT',
                 'ALTER TABLE tasks ADD COLUMN sync_status TEXT DEFAULT "pending"',
                 'ALTER TABLE tasks ADD COLUMN server_id INTEGER', // New migration
+                'ALTER TABLE tasks ADD COLUMN delayed_at TEXT',
+                'ALTER TABLE tasks ADD COLUMN delay_history TEXT',
                 'CREATE TABLE IF NOT EXISTS devices (id TEXT PRIMARY KEY NOT NULL, name TEXT, model TEXT, station TEXT, last_sync TEXT, battery_level INTEGER, storage_used TEXT, model_version TEXT, model_updated TEXT)'
             ];
 
@@ -131,9 +138,10 @@ export const initDatabase = async () => {
             }
 
             console.log('Database initialized successfully');
-            
+
             // ... device seeding
-            const deviceCount = await db.getFirstAsync<{count: number}>('SELECT COUNT(*) as count FROM devices');
+            // ... device seeding
+            const deviceCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM devices');
             if (deviceCount?.count === 0) {
                 await db.runAsync(
                     'INSERT INTO devices (id, name, model, station, last_sync, battery_level, storage_used, model_version, model_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -156,13 +164,12 @@ export const saveIncident = async (incident: Incident) => {
     try {
         if (!db) await initDatabase();
         await db.runAsync(
-            'INSERT INTO incidents (id, created_at, media_uris, ml_metadata, advisory, severity, sync_status, status, note, department, area, plant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO incidents (id, created_at, media_uris, severity, sync_status, status, note, department, area, plant) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?,?)',
             [
                 incident.id || '',
                 incident.created_at || new Date().toISOString(),
                 incident.media_uris || '[]',
-                incident.ml_metadata || '{}',
-                incident.advisory || '',
+
                 incident.severity || 1,
                 incident.sync_status || 'pending',
                 incident.status || 'open',
@@ -182,9 +189,9 @@ export const updateIncident = async (incident: Incident) => {
     try {
         if (!db) await initDatabase();
         await db.runAsync(
-            'UPDATE incidents SET advisory = ?, severity = ?, note = ?, sync_status = ? WHERE id = ?',
+            'UPDATE incidents SET  severity = ?, note = ?, sync_status = ? WHERE id = ?',
             [
-                incident.advisory || '',
+
                 incident.severity || 1,
                 incident.note || '',
                 'pending',
@@ -260,8 +267,8 @@ export const createTask = async (task: Task) => {
     try {
         if (!db) await initDatabase();
         await db.runAsync(
-            'INSERT INTO tasks (id, title, assignee, description, priority, status, due_date, comments, area, plant, precautions, incident_id, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [task.id || '', task.title || '', task.assignee || '', task.description || '', task.priority || 'medium', task.status || 'pending', task.due_date || '', task.comments || '[]', task.area || '', task.plant || '', task.precautions || '', task.incident_id || '', task.sync_status || 'pending']
+            'INSERT INTO tasks (id, title, assignee, description, priority, status, due_date, comments, area, plant, precautions, incident_id, sync_status, delayed_at, delay_history) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [task.id || '', task.title || '', task.assignee || '', task.description || '', task.priority || 'medium', task.status || 'pending', task.due_date || '', task.comments || '[]', task.area || '', task.plant || '', task.precautions || '', task.incident_id || '', task.sync_status || 'pending', task.delayed_at || '', task.delay_history || '[]']
         );
     } catch (error) {
         console.error('Error creating task:', error);
@@ -277,11 +284,31 @@ export const getTaskById = async (id: string): Promise<Task | null> => {
     }
 };
 
-export const updateTaskStatus = async (id: string, status: string, delayReason?: string) => {
+export const updateTaskStatus = async (id: string, status: string, delayReason?: string, delayedAt?: string) => {
     try {
         if (!db) await initDatabase();
         if (delayReason) {
-            await db.runAsync('UPDATE tasks SET status = ?, delay_reason = ?, sync_status = "pending" WHERE id = ?', [status || 'Delayed', delayReason || '', id || '']);
+            // Fetch existing history to append
+            const task = await db.getFirstAsync<Task>('SELECT delay_history FROM tasks WHERE id = ?', [id]);
+            let history: { reason: string; timestamp: string }[] = [];
+            try {
+                if (task?.delay_history) {
+                    history = JSON.parse(task.delay_history);
+                }
+            } catch (e) {
+                // Ignore parse error, start fresh
+            }
+
+            const newEntry = {
+                reason: delayReason,
+                timestamp: delayedAt || new Date().toISOString()
+            };
+            // Add to history (newest first or last? Let's do newest first for display convenience, but array usually append. Let's append.)
+            // Actually, for display "history", newest first is often better. But standard arrays append. I'll unshift.
+            history.unshift(newEntry);
+
+            await db.runAsync('UPDATE tasks SET status = ?, delay_reason = ?, delayed_at = ?, delay_history = ?, sync_status = "pending" WHERE id = ?',
+                [status || 'Delayed', delayReason || '', delayedAt || new Date().toISOString(), JSON.stringify(history), id || '']);
         } else {
             await db.runAsync('UPDATE tasks SET status = ?, sync_status = "pending" WHERE id = ?', [status || '', id || '']);
         }

@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HazardEye.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -175,7 +175,7 @@ namespace HazardEye.API.Migrations
                     Status = table.Column<string>(type: "text", nullable: false),
                     AssignedTo = table.Column<int>(type: "integer", nullable: true),
                     CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    MediaUris = table.Column<List<string>>(type: "jsonb", nullable: false),
+                    MediaUris = table.Column<string>(type: "jsonb", nullable: false),
                     MlMetadata = table.Column<Dictionary<string, object>>(type: "jsonb", nullable: false),
                     Advisory = table.Column<string>(type: "text", nullable: true),
                     Note = table.Column<string>(type: "text", nullable: true),

@@ -2,11 +2,53 @@
 
 Hazard-Eye is a comprehensive safety management platform consisting of a localized mobile app for reporting, a web dashboard for supervisors, and a .NET backend for data processing.
 
-## Project Structure
+## 📂 Project Structure
 
-- **backend/HazardEye.API**: .NET 8 Web API handling authentication, incident management, and real-time updates via SignalR.
-- **webPortalSupervisor/supervisor-dashboard**: React + TypeScript + Vite web portal for supervisors to view statistics and manage users/incidents.
-- **mobile**: React Native (Expo) mobile application for field reporting.
+### 1. Backend (`/backend/HazardEye.API`)
+Built with **.NET 8 Web API**. Handles authentication, incident management, and real-time updates via SignalR.
+
+- **`Controllers/`**: HTTP API endpoints.
+  - `AuthController.cs`: User registration and login.
+  - `IncidentsController.cs`: CRUD operations for incidents.
+  - `TasksController.cs`: Management of safety tasks.
+- **`Data/`**: Entity Framework Core configuration.
+  - `HazardEyeDbContext.cs`: Database context definition.
+- **`DTOs/`**: Data Transfer Objects for API requests/responses (e.g., `LoginDto`, `IncidentDto`).
+- **`Hubs/`**: SignalR hubs for real-time WebSocket communication (`NotificationHub`).
+- **`Models/`**: Domain entities representing the database schema (`Incident`, `User`, `WorkTask`).
+- **`Services/`**: Business logic layer.
+  - `AuthService.cs`: JWT generation and validation.
+  - `IncidentService.cs`: Incident processing logic.
+- **`Migrations/`**: EF Core database migration files.
+
+### 2. Mobile App (`/mobile`)
+Built with **React Native (Expo)**. Used by field workers and supervisors.
+
+- **`app/`**: Expo Router file-based routing.
+    - **`(supervisor)/`**: Routes specific to supervisors (e.g., verifying reports).
+    - **`(tabs)/`**: Main tab navigation for workers (Home, History, Profile).
+    - **`incidents/`**: Incident details and lists.
+    - **`report/`**: Incident reporting form.
+    - **`login.tsx`**: Authentication screen.
+- **`src/`**: Shared source code.
+    - **`components/`**: Reusable UI components.
+    - **`hooks/`**: Custom React hooks.
+    - **`services/`**: API integration services.
+    - **`types/`**: TypeScript interfaces.
+- **`assets/`**: Images, fonts, and icons.
+
+### 3. Web Portal (`/webPortal`)
+Built with **React + TypeScript + Vite**. Admin and Supervisor dashboard.
+
+- **`src/`**: output source code.
+    - **`admin/`**: Admin-specific views (User management, system settings).
+    - **`supervisor/`**: Supervisor dashboard.
+        - **`Dashboard.tsx`**: Main overview with charts and stats.
+        - **`Incidents.tsx`**: Comprehensive incident table.
+    - **`employee/`**: Employee-specific views (Task lists).
+    - **`shared/`**: Reusable UI components (Buttons, Inputs, Modals) and contexts (AuthContext).
+    - **`auth/`**: Login page and authentication logic.
+- **`public/`**: Static assets.
 
 ## Getting Started
 
@@ -18,7 +60,7 @@ Hazard-Eye is a comprehensive safety management platform consisting of a localiz
 
 ### 1. Database Setup
 
-Ensure PostgreSQL is running and a database named `hazardeeye` exists. The backend will automatically apply migrations and seed the database on startup.
+Ensure PostgreSQL is running and a database named `hazard` exists. The backend will automatically apply migrations and seed the database on startup.
 
 ### 2. Backend
 
@@ -45,11 +87,11 @@ Default Admin: `admin@hazardeeye.com` / `AdminPassword123!`
 
 ```bash
 cd mobile
-npm install
-npx expo run:android
+npm install expo
+npx expo start
 ```
 
-- **Note**: This app uses custom native code (ONNX Runtime). You **cannot** use Expo Go. You must use a Development Build or Emulator.
+
 - `npm install` will automatically fix Gradle permissions.
 - See `mobile/README.md` for detailed troubleshooting and cross-platform setup.
 

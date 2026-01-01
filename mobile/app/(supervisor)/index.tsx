@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllIncidents, Incident, updateIncidentStatus } from '../../src/services/Database';
-import { CumulativeAISummary } from '../../src/components/CumulativeAISummary';
+
 import { IncidentFilters, FilterState, Severity, Department, IncidentStatus } from '../../src/components/IncidentFilters';
 import { isWithinInterval, parseISO, startOfDay, endOfDay, subDays, startOfMonth, startOfYear, subMonths, subYears } from 'date-fns';
 
@@ -52,7 +52,7 @@ export default function SupervisorIncidentsScreen() {
                 const severityLabel = getSeverityLabel(incident.severity);
                 const haystacks = [
                     incident.note,
-                    incident.advisory,
+                   
                     incident.area,
                     incident.plant,
                     incident.department,
@@ -168,15 +168,7 @@ export default function SupervisorIncidentsScreen() {
                 incidents={incidents}
             />
 
-            {/* AI Summary */}
-            {filteredIncidents.length > 0 && (
-                <CumulativeAISummary
-                    incidents={filteredIncidents}
-                    timeRange={filters.timeRange}
-                    customStartDate={filters.customStartDate}
-                    customEndDate={filters.customEndDate}
-                />
-            )}
+
 
             {filteredIncidents.length > 0 && (
                 <Text style={styles.resultsText}>
@@ -219,7 +211,7 @@ export default function SupervisorIncidentsScreen() {
                         <View style={styles.cardHeader}>
                             <View style={{ flex: 1, marginRight: 8 }}>
                                 <Text style={styles.cardTitle} numberOfLines={2}>
-                                    {item.department ? `${item.department}: ` : ''}{item.advisory || item.note || 'Untitled Incident'}
+                                    {item.department ? `${item.department}: ` : ''}{ item.note || 'Untitled Incident'}
                                 </Text>
                             </View>
                             <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>

@@ -39,9 +39,15 @@ export default function ReviewScreen() {
                 const incident = await getIncidentById(existingId);
                 if (incident) {
                     setIncidentId(incident.id);
-                    setDescription(incident.advisory || '');
+
                     setSeverity(incident.severity);
-                    setSelectedLocation(incident.note);
+                    setDescription(incident.note || '');
+setSelectedLocation(
+  [incident.plant, incident.area, incident.department]
+    .filter(Boolean)
+    .join(' • ') || null
+);
+
                     if (incident.media_uris) {
                         try {
                             const media = JSON.parse(incident.media_uris);
@@ -65,16 +71,20 @@ export default function ReviewScreen() {
 
         if (isEditing) {
             const updatedIncident: Incident = {
-                id: incidentId,
-                created_at: timestamp.toISOString(),
-                media_uris: JSON.stringify([]), 
-                ml_metadata: '{}',
-                advisory: description,
-                severity,
-                sync_status: 'pending',
-                status: 'open',
-                note: selectedLocation
-            };
+  id: incidentId,
+  created_at: timestamp.toISOString(),
+  media_uris: JSON.stringify([]),
+
+  severity,
+  sync_status: 'pending',
+  status: 'open',
+
+  note: description,
+  plant: selectedLocation || '',
+  area: '',
+  department: '',
+};
+
 
             try {
                 await updateIncident(updatedIncident);
@@ -86,17 +96,24 @@ export default function ReviewScreen() {
                 Alert.alert("Error", "Failed to update incident.");
             }
         } else {
-            const newIncident: Incident = {
-                id: incidentId,
-                created_at: timestamp.toISOString(),
-                media_uris: JSON.stringify([imageUri || '']), 
-                ml_metadata: '{}', 
-                advisory: description,
-                severity,
-                sync_status: 'pending',
-                status: 'open',
-                note: selectedLocation
-            };
+           const newIncident: Incident = {
+  id: incidentId,
+  created_at: timestamp.toISOString(),
+  media_uris: JSON.stringify([imageUri || '']),
+
+  severity,
+  sync_status: 'pending',
+  status: 'open',
+
+  // WHAT happened
+  note: description,
+
+  // WHERE it happened
+  plant: selectedLocation || '',
+  area: '',
+  department: '',
+};
+
 
             try {
                 await saveIncident(newIncident);

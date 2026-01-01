@@ -13,15 +13,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HazardEye.API.Migrations
 {
     [DbContext(typeof(HazardEyeDbContext))]
-    [Migration("20251215093027_InitialSchema")]
-    partial class InitialSchema
+    [Migration("20260101050712_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -275,7 +275,7 @@ namespace HazardEye.API.Migrations
                     b.Property<string>("IncidentId")
                         .HasColumnType("text");
 
-                    b.Property<List<string>>("MediaUris")
+                    b.PrimitiveCollection<string>("MediaUris")
                         .IsRequired()
                         .HasColumnType("jsonb");
 

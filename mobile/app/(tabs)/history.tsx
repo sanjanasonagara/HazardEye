@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList, RefreshControl, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, FlatList, RefreshControl, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -29,7 +29,7 @@ export default function HistoryScreen() {
         const allData = await getAllIncidents();
         setIncidents(allData);
         setPendingCount(allData.filter(i => i.sync_status === 'pending').length);
-        
+
         const role = await SecureStore.getItemAsync('userRole');
         if (role) setUserRole(role);
     };
@@ -70,16 +70,13 @@ export default function HistoryScreen() {
         return incidents.filter(item => {
             // Search Filter
             const matchesSearch =
-                item.advisory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+
                 (item.note || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.id.toLowerCase().includes(searchQuery.toLowerCase());
 
             if (!matchesSearch) return false;
 
-            // Worker Restriction: Only show pending items
-            if (userRole && userRole.toLowerCase() === 'worker' && item.sync_status !== 'pending') {
-                return false;
-            }
+
 
             // Category Filter
             if (activeFilter === 'All') return true;
@@ -108,23 +105,34 @@ export default function HistoryScreen() {
             const media = JSON.parse(item.media_uris || '[]');
             if (media.length > 0) imageUrl = media[0];
         } catch (e) { }
+        
 
         return (
-            <View style={styles.card}>
+            <TouchableOpacity style={styles.card} onPress={() => router.push(`incidents/${item.id}`)}>
                 <View style={styles.cardHeader}>
                     <View style={styles.iconBox}>
-                        <Ionicons name="alert-circle-outline" size={24} color="#4A5568" />
+                        {imageUrl ? (
+                            <Image
+                                source={{ uri: imageUrl }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <Ionicons name="alert-circle-outline" size={24} color="#4A5568" />
+                        )}
                     </View>
                     <View style={styles.headerTextContainer}>
                         <View style={styles.titleRow}>
-                            <Text style={styles.cardTitle} numberOfLines={1}>{item.advisory || 'Untitled Incident'}</Text>
+                            <Text style={styles.cardTitle} numberOfLines={1}>{item.note || 'Untitled Incident'}</Text>
                             <View style={[styles.sevBadge, { backgroundColor: severityStyle.color }]}>
                                 <Text style={[styles.sevText, { color: severityStyle.text }]}>{severityStyle.label}</Text>
                             </View>
                         </View>
                         <View style={styles.subRow}>
                             <Ionicons name="location-outline" size={12} color="#718096" />
-                            <Text style={styles.locationText}>{item.note || 'Unknown Location'}</Text>
+                            <Text style={styles.locationText}>
+                                {[item.plant, item.area, item.department].filter(Boolean).join(' • ') || 'Unknown Location'}
+                            </Text>
                         </View>
                         <Text style={styles.idTextMeta} numberOfLines={1} ellipsizeMode="middle">ID: {item.id}</Text>
                     </View>
@@ -141,14 +149,7 @@ export default function HistoryScreen() {
                         </View>
                     </View>
 
-                    {item.advisory ? (
-                        <View style={styles.bulletContainer}>
-                            <View style={styles.bulletRow}>
-                                <View style={styles.bullet} />
-                                <Text style={styles.bulletText} numberOfLines={1}>{item.advisory}</Text>
-                            </View>
-                        </View>
-                    ) : null}
+
 
                     <View style={styles.actionRow}>
                         <View style={styles.leftActions}>
@@ -177,7 +178,7 @@ export default function HistoryScreen() {
                         )}
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 

@@ -2,13 +2,14 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, Modal, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { getIncidentById, Incident, updateIncidentStatus, getTasks, Task } from '../../../src/services/Database';
+import { getIncidentById, Incident, updateIncidentStatus, getTasks, Task } from '../../src/services/Database';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, CardHeader, CardBody } from '../../../src/components/UI/Card';
-import { Badge } from '../../../src/components/UI/Badge';
-import { Button } from '../../../src/components/UI/Button';
-import { AIRecommendationPanel, AIRecommendation } from '../../../src/components/AIRecommendationPanel';
+import { Card, CardHeader, CardBody } from '../../src/components/UI/Card';
+import { Badge } from '../../src/components/UI/Badge';
+import { Button } from '../../src/components/UI/Button';
+import { AIRecommendationPanel, AIRecommendation } from '../../src/components/AIRecommendationPanel';
 import { format } from 'date-fns';
+import * as SecureStore from 'expo-secure-store';
 
 export default function IncidentDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -17,6 +18,7 @@ export default function IncidentDetailScreen() {
     const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
     const [activeTab, setActiveTab] = useState<'overview' | 'analysis' | 'tasks'>('overview');
     const [showImageModal, setShowImageModal] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     useFocusEffect(
         useCallback(() => {
@@ -34,6 +36,9 @@ export default function IncidentDetailScreen() {
         const allTasks = await getTasks();
         const related = allTasks.filter(t => t.incident_id === incidentId);
         setRelatedTasks(related);
+
+        const role = await SecureStore.getItemAsync('userRole');
+        setUserRole(role);
     };
 
     const handleCreateTask = () => {
@@ -88,8 +93,7 @@ export default function IncidentDetailScreen() {
         );
     };
 
- 
-
+   
     if (!incident) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
@@ -107,6 +111,7 @@ export default function IncidentDetailScreen() {
     } catch (e) { }
 
     const isClosed = incident.status === 'closed';
+    const canManage = userRole === 'supervisor' || userRole === 'admin';
 
     return (
         <View style={styles.container}>
@@ -130,7 +135,7 @@ export default function IncidentDetailScreen() {
                 <View style={styles.idHeader}>
                     <Text style={styles.idText}>ID: {incident.id}</Text>
                     <View style={styles.actionButtons}>
-                        {!isClosed && (
+                        {canManage && !isClosed && (
                             <Button size="sm" variant="outline" onPress={handleCreateTask} icon={<Ionicons name="add" size={16} color="#4A5568" />}>
                                 Task
                             </Button>
@@ -220,27 +225,39 @@ export default function IncidentDetailScreen() {
                         </Card>
 
                         {/* Actions */}
-                        <View style={styles.actionRow}>
-                            {incident.status !== 'verified' && !isClosed && (
-                                <Button onPress={handleVerifyIncident} style={{ flex: 1, backgroundColor: '#48BB78' }} icon={<Ionicons name="checkmark-circle-outline" size={18} color="#fff" />}>
-                                    Verify
-                                </Button>
-                            )}
-                            {!isClosed ? (
-                                <Button onPress={handleCloseIncident} variant="danger" style={{ flex: 1 }} icon={<Ionicons name="close-circle-outline" size={18} color="#fff" />}>
-                                    Close Incident
-                                </Button>
-                            ) : (
-                                <View style={styles.closedBanner}>
-                                    <Ionicons name="lock-closed" size={18} color="#718096" />
-                                    <Text style={{ fontStyle: 'italic', color: '#718096' }}>This incident is resolved.</Text>
-                                </View>
-                            )}
-                        </View>
+                        {canManage && (
+                            <View style={styles.actionRow}>
+                                {incident.status !== 'verified' && !isClosed && (
+                                    <Button onPress={handleVerifyIncident} style={{ flex: 1, backgroundColor: '#48BB78' }} icon={<Ionicons name="checkmark-circle-outline" size={18} color="#fff" />}>
+                                        Verify
+                                    </Button>
+                                )}
+                                {!isClosed ? (
+                                    <Button onPress={handleCloseIncident} variant="danger" style={{ flex: 1 }} icon={<Ionicons name="close-circle-outline" size={18} color="#fff" />}>
+                                        Close Incident
+                                    </Button>
+                                ) : (
+                                    <View style={styles.closedBanner}>
+                                        <Ionicons name="lock-closed" size={18} color="#718096" />
+                                        <Text style={{ fontStyle: 'italic', color: '#718096' }}>This incident is resolved.</Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
                     </View>
                 )}
 
-                
+                {activeTab === 'analysis' && (
+                    <View style={styles.tabContent}>
+                        
+                        {incident.note && (
+                            <Card>
+                                <CardHeader><Text style={{ fontWeight: 'bold' }}>Inspector Notes</Text></CardHeader>
+                                <CardBody><Text style={{ color: '#4A5568' }}>{incident.note}</Text></CardBody>
+                            </Card>
+                        )}
+                    </View>
+                )}
 
                 {activeTab === 'tasks' && (
                     <View style={styles.tabContent}>
@@ -248,7 +265,7 @@ export default function IncidentDetailScreen() {
                             <Card>
                                 <CardBody style={{ alignItems: 'center', padding: 32 }}>
                                     <Text style={{ color: '#718096' }}>No tasks linked to this incident.</Text>
-                                    {!isClosed && (
+                                    {canManage && !isClosed && (
                                         <Button variant="outline" onPress={handleCreateTask} style={{ marginTop: 16 }}>
                                             Create Task
                                         </Button>
@@ -271,9 +288,11 @@ export default function IncidentDetailScreen() {
                                                     Assigned to: {task.assignee}
                                                 </Text>
                                             </View>
-                                            <Button size="sm" variant="outline" onPress={() => router.push(`/(supervisor)/tasks/${task.id}`)}>
-                                                View
-                                            </Button>
+                                            {canManage && (
+                                                <Button size="sm" variant="outline" onPress={() => router.push(`/(supervisor)/tasks/${task.id}`)}>
+                                                    View
+                                                </Button>
+                                            )}
                                         </View>
                                     </CardBody>
                                 </Card>

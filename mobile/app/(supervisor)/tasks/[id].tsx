@@ -172,11 +172,38 @@ export default function TaskDetailScreen() {
                     </CardBody>
                 </Card>
 
-                {task.delay_reason && (
+                {(task.delay_reason || (task.delay_history && task.delay_history !== '[]')) && (
                     <Card style={{ borderColor: '#FBD38D', borderWidth: 1 }}>
-                        <CardHeader><Text style={[styles.cardTitle, { color: '#C05621' }]}>Current Delay Status</Text></CardHeader>
+                        <CardHeader><Text style={[styles.cardTitle, { color: '#C05621' }]}>Delay History</Text></CardHeader>
                         <CardBody>
-                            <Text style={{ fontWeight: '600', color: '#C05621' }}>{task.delay_reason}</Text>
+                            {/* Fallback for old data or if history is empty but reason exists */}
+                            {(!task.delay_history || task.delay_history === '[]') && task.delay_reason && (
+                                <View style={{ marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#FEEBC8' }}>
+                                    <Text style={{ fontWeight: '600', color: '#C05621' }}>{task.delay_reason}</Text>
+                                    {task.delayed_at && !isNaN(new Date(task.delayed_at).getTime()) && (
+                                        <Text style={{ fontSize: 12, color: '#975A16', marginTop: 4 }}>
+                                            Reported {formatDistanceToNow(new Date(task.delayed_at), { addSuffix: true })}
+                                        </Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Render History */}
+                            {task.delay_history && (() => {
+                                try {
+                                    const history = JSON.parse(task.delay_history) as { reason: string, timestamp: string }[];
+                                    return history.map((h, i) => (
+                                        <View key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottomWidth: i === history.length - 1 ? 0 : 1, borderBottomColor: '#FEEBC8' }}>
+                                            <Text style={{ fontWeight: '600', color: '#C05621' }}>{h.reason}</Text>
+                                            {h.timestamp && !isNaN(new Date(h.timestamp).getTime()) && (
+                                                <Text style={{ fontSize: 12, color: '#975A16', marginTop: 4 }}>
+                                                    {formatDistanceToNow(new Date(h.timestamp), { addSuffix: true })}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    ));
+                                } catch (e) { return null; }
+                            })()}
                         </CardBody>
                     </Card>
                 )}
@@ -277,7 +304,7 @@ export default function TaskDetailScreen() {
                                 <View style={{ width: 80, height: 80, backgroundColor: '#EDF2F7', borderRadius: 8 }} />
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.cardTitle} numberOfLines={1}>{linkedIncident.department} Issue</Text>
-                                    <Text numberOfLines={2} style={styles.bodyText}>{linkedIncident.advisory}</Text>
+                                    
                                     <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
                                         <Badge variant={linkedIncident.status as any}>{linkedIncident.status}</Badge>
                                     </View>
@@ -326,9 +353,6 @@ export default function TaskDetailScreen() {
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                     {task.status !== 'Completed' && (
                         <Button onPress={handleMarkDone} size="sm" style={{ backgroundColor: '#48BB78' }}>Done</Button>
-                    )}
-                    {task.status !== 'Completed' && isOverdue && (
-                        <Button onPress={() => setShowDelayModal(true)} size="sm" variant="outline" style={{ borderColor: '#ECC94B' }}>Delay</Button>
                     )}
                 </View>
             </View>

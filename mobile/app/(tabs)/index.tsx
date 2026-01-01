@@ -29,7 +29,7 @@ export default function HomeScreen() {
         const allTasks = await getTasks();
         const pendingTasks = allTasks.filter(t => t.status !== 'Completed' && t.status !== 'completed');
         setTaskCount(pendingTasks.length);
-        
+
         await refreshDeviceData();
     };
 
@@ -80,8 +80,8 @@ export default function HomeScreen() {
                             </View>
                         </View>
                         <View style={[styles.deviceRow, { marginTop: 4 }]}>
-                           <Text style={[styles.deviceText, { opacity: 0.7, fontSize: 12 }]}>{device?.station || 'Station Unknown'}</Text>
-                           <Text style={[styles.deviceText, { opacity: 0.7, fontSize: 12 }]}>{device?.id || '...'}</Text>
+                            <Text style={[styles.deviceText, { opacity: 0.7, fontSize: 12 }]}>{device?.station || 'Station Unknown'}</Text>
+                            <Text style={[styles.deviceText, { opacity: 0.7, fontSize: 12 }]}>{device?.id || '...'}</Text>
                         </View>
                         <View style={[styles.deviceRow, { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }]}>
                             <Text style={styles.deviceStorageText}>Storage: {device?.storage_used || '...'}</Text>
@@ -135,21 +135,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* ML Status Card */}
-                <View style={styles.mlCard}>
-                    <View style={styles.mlHeader}>
-                        <Text style={styles.mlTitle}>Edge ML Status</Text>
-                        <View style={[styles.mlBadge, { backgroundColor: '#10B910' }]}>
-                            <Ionicons name="ellipse" size={14} color="#fff" />
-                            <Text style={styles.mlBadgeText}>ACTIVE</Text>
-                        </View>
-                    </View>
-                    <Text style={styles.mlSubtitle}>Model loaded and ready</Text>
-                    <View style={styles.mlFooter}>
-                        <Text style={styles.mlMeta}>Version: {device?.model_version || '...'}</Text>
-                        <Text style={styles.mlMeta}>Updated: {device?.model_updated || '...'}</Text>
-                    </View>
-                </View>
+
 
             </ScrollView>
         </View>
@@ -292,52 +278,5 @@ const styles = StyleSheet.create({
         color: '#6B7280',
         lineHeight: 16,
     },
-    mlCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        marginTop: 4,
-        elevation: 2,
-    },
-    mlHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    mlTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#111827',
-    },
-    mlBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#ef4444',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        gap: 4,
-    },
-    mlBadgeText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: 'bold',
-    },
-    mlSubtitle: {
-        fontSize: 14,
-        color: '#4B5563',
-        marginBottom: 16,
-    },
-    mlFooter: {
-        flexDirection: 'column',
-        gap: 4,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-        paddingTop: 12,
-    },
-    mlMeta: {
-        fontSize: 12,
-        color: '#6B7280',
-    },
+
 });

@@ -68,7 +68,7 @@ export default function WorkerTaskDetailScreen() {
 
     const handleDelaySubmit = async () => {
         if (!delayReason.trim()) return;
-        await updateTaskStatus(task.id, 'Delayed', delayReason);
+        await updateTaskStatus(task.id, 'Delayed', delayReason, new Date().toISOString());
         setDelayReason('');
         setShowDelayModal(false);
         await loadData(task.id);
@@ -115,7 +115,7 @@ export default function WorkerTaskDetailScreen() {
                     <CardBody>
                         <Text style={styles.sectionLabel}>DESCRIPTION</Text>
                         <Text style={styles.descriptionText}>{task.description}</Text>
-                        
+
                         <View style={styles.grid}>
                             <View style={styles.gridItem}>
                                 <Text style={styles.label}>AREA</Text>
@@ -128,8 +128,8 @@ export default function WorkerTaskDetailScreen() {
                             <View style={styles.gridItem}>
                                 <Text style={styles.label}>DUE DATE</Text>
                                 <Text style={styles.valueText}>
-                                    {task.due_date && !isNaN(new Date(task.due_date).getTime()) 
-                                        ? format(new Date(task.due_date), 'MMM d, yyyy') 
+                                    {task.due_date && !isNaN(new Date(task.due_date).getTime())
+                                        ? format(new Date(task.due_date), 'MMM d, yyyy')
                                         : 'TBD'}
                                 </Text>
                             </View>
@@ -149,11 +149,38 @@ export default function WorkerTaskDetailScreen() {
                     </CardBody>
                 </Card>
 
-                {task.delay_reason && (
+                {(task.delay_reason || (task.delay_history && task.delay_history !== '[]')) && (
                     <Card style={{ borderColor: '#FBD38D', borderWidth: 1 }}>
-                        <CardHeader><Text style={[styles.cardTitle, { color: '#C05621' }]}>Current Delay Status</Text></CardHeader>
+                        <CardHeader><Text style={[styles.cardTitle, { color: '#C05621' }]}>Delay History</Text></CardHeader>
                         <CardBody>
-                            <Text style={{ fontWeight: '600', color: '#C05621' }}>{task.delay_reason}</Text>
+                            {/* Fallback for old data or if history is empty but reason exists */}
+                            {(!task.delay_history || task.delay_history === '[]') && task.delay_reason && (
+                                <View style={{ marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#FEEBC8' }}>
+                                    <Text style={{ fontWeight: '600', color: '#C05621' }}>{task.delay_reason}</Text>
+                                    {task.delayed_at && !isNaN(new Date(task.delayed_at).getTime()) && (
+                                        <Text style={{ fontSize: 12, color: '#975A16', marginTop: 4 }}>
+                                            Reported {formatDistanceToNow(new Date(task.delayed_at), { addSuffix: true })}
+                                        </Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Render History */}
+                            {task.delay_history && (() => {
+                                try {
+                                    const history = JSON.parse(task.delay_history) as { reason: string, timestamp: string }[];
+                                    return history.map((h, i) => (
+                                        <View key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottomWidth: i === history.length - 1 ? 0 : 1, borderBottomColor: '#FEEBC8' }}>
+                                            <Text style={{ fontWeight: '600', color: '#C05621' }}>{h.reason}</Text>
+                                            {h.timestamp && !isNaN(new Date(h.timestamp).getTime()) && (
+                                                <Text style={{ fontSize: 12, color: '#975A16', marginTop: 4 }}>
+                                                    {formatDistanceToNow(new Date(h.timestamp), { addSuffix: true })}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    ));
+                                } catch (e) { return null; }
+                            })()}
                         </CardBody>
                     </Card>
                 )}
@@ -175,7 +202,7 @@ export default function WorkerTaskDetailScreen() {
                                     const isNewFormat = typeof c === 'object' && c !== null && 'text' in c;
                                     const text = isNewFormat ? c.text : c as string;
                                     const timestamp = isNewFormat ? c.timestamp : null;
-                                    
+
                                     return (
                                         <View key={i} style={styles.commentBox}>
                                             <Text style={styles.commentContent}>{text}</Text>
@@ -193,14 +220,14 @@ export default function WorkerTaskDetailScreen() {
                 </Card>
 
                 {linkedIncident && (
-                   <TouchableOpacity style={{ marginTop: 8 }} onPress={() => {}}>
+                    <TouchableOpacity style={{ marginTop: 8 }} onPress={() => router.push('/(tabs)/incidents/' + linkedIncident.id)}>
                         <Card>
                             <CardHeader><Text style={styles.cardTitle}>Linked Incident</Text></CardHeader>
                             <CardBody>
-                                <Text style={styles.bodyText} numberOfLines={2}>{linkedIncident.advisory}</Text>
+                                <Text style={styles.bodyText} numberOfLines={2}>{linkedIncident.note}</Text>
                             </CardBody>
                         </Card>
-                   </TouchableOpacity>
+                    </TouchableOpacity>
                 )}
             </ScrollView>
 

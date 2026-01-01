@@ -1,16 +1,15 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, Modal, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { getIncidentById, Incident, updateIncidentStatus, getTasks, Task } from '../../../src/services/Database';
+import { getIncidentById, Incident, getTasks, Task } from '../../../src/services/Database';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, CardHeader, CardBody } from '../../../src/components/UI/Card';
+import { Card, CardBody } from '../../../src/components/UI/Card';
 import { Badge } from '../../../src/components/UI/Badge';
 import { Button } from '../../../src/components/UI/Button';
-import { AIRecommendationPanel, AIRecommendation } from '../../../src/components/AIRecommendationPanel';
 import { format } from 'date-fns';
 
-export default function IncidentDetailScreen() {
+export default function WorkerIncidentDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const [incident, setIncident] = useState<Incident | null>(null);
@@ -35,60 +34,6 @@ export default function IncidentDetailScreen() {
         const related = allTasks.filter(t => t.incident_id === incidentId);
         setRelatedTasks(related);
     };
-
-    const handleCreateTask = () => {
-        if (incident) {
-            router.push({
-                pathname: '/(supervisor)/tasks',
-                params: {
-                    createForIncident: incident.id,
-                    initialArea: incident.area || '',
-                    initialPlant: incident.plant || '',
-                    initialDescription: `Check incident: ${ incident.note}`
-                }
-            });
-        }
-    };
-
-    const handleCloseIncident = () => {
-        if (!incident) return;
-        Alert.alert(
-            "Close Incident",
-            "Are you sure you want to close this incident?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Close",
-                    style: "destructive",
-                    onPress: async () => {
-                        await updateIncidentStatus(incident.id, 'closed');
-                        setIncident(prev => prev ? { ...prev, status: 'closed' } : null);
-                        Alert.alert("Success", "Incident closed.");
-                    }
-                }
-            ]
-        );
-    };
-
-    const handleVerifyIncident = () => {
-        if (!incident) return;
-        Alert.alert(
-            "Verify Incident",
-            "Mark this incident as Verified?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Verify",
-                    onPress: async () => {
-                        await updateIncidentStatus(incident.id, 'verified');
-                        setIncident(prev => prev ? { ...prev, status: 'verified' } : null);
-                    }
-                }
-            ]
-        );
-    };
-
- 
 
     if (!incident) {
         return (
@@ -129,13 +74,6 @@ export default function IncidentDetailScreen() {
                 {/* ID Header */}
                 <View style={styles.idHeader}>
                     <Text style={styles.idText}>ID: {incident.id}</Text>
-                    <View style={styles.actionButtons}>
-                        {!isClosed && (
-                            <Button size="sm" variant="outline" onPress={handleCreateTask} icon={<Ionicons name="add" size={16} color="#4A5568" />}>
-                                Task
-                            </Button>
-                        )}
-                    </View>
                 </View>
 
                 {/* Tabs */}
@@ -177,7 +115,7 @@ export default function IncidentDetailScreen() {
                                         <View style={styles.descSection}>
                                             <Text style={styles.label}>DESCRIPTION</Text>
                                             <Text style={styles.descriptionText}>
-                                                { incident.note || 'No description provided.'}
+                                                {incident.note || 'No description provided.'}
                                             </Text>
                                         </View>
 
@@ -219,28 +157,24 @@ export default function IncidentDetailScreen() {
                             </CardBody>
                         </Card>
 
-                        {/* Actions */}
-                        <View style={styles.actionRow}>
-                            {incident.status !== 'verified' && !isClosed && (
-                                <Button onPress={handleVerifyIncident} style={{ flex: 1, backgroundColor: '#48BB78' }} icon={<Ionicons name="checkmark-circle-outline" size={18} color="#fff" />}>
-                                    Verify
-                                </Button>
-                            )}
-                            {!isClosed ? (
-                                <Button onPress={handleCloseIncident} variant="danger" style={{ flex: 1 }} icon={<Ionicons name="close-circle-outline" size={18} color="#fff" />}>
-                                    Close Incident
-                                </Button>
-                            ) : (
-                                <View style={styles.closedBanner}>
-                                    <Ionicons name="lock-closed" size={18} color="#718096" />
-                                    <Text style={{ fontStyle: 'italic', color: '#718096' }}>This incident is resolved.</Text>
-                                </View>
-                            )}
-                        </View>
+                        {isClosed && (
+                            <View style={[styles.closedBanner, { marginTop: 16 }]}>
+                                <Ionicons name="lock-closed" size={18} color="#718096" />
+                                <Text style={{ fontStyle: 'italic', color: '#718096' }}>This incident is resolved.</Text>
+                            </View>
+                        )}
                     </View>
                 )}
 
-                
+                {activeTab === 'analysis' && (
+                    <View style={styles.tabContent}>
+                        {incident.note && (
+                            <Card>
+                                <CardBody><Text style={{ color: '#4A5568' }}>{incident.note}</Text></CardBody>
+                            </Card>
+                        )}
+                    </View>
+                )}
 
                 {activeTab === 'tasks' && (
                     <View style={styles.tabContent}>
@@ -248,11 +182,6 @@ export default function IncidentDetailScreen() {
                             <Card>
                                 <CardBody style={{ alignItems: 'center', padding: 32 }}>
                                     <Text style={{ color: '#718096' }}>No tasks linked to this incident.</Text>
-                                    {!isClosed && (
-                                        <Button variant="outline" onPress={handleCreateTask} style={{ marginTop: 16 }}>
-                                            Create Task
-                                        </Button>
-                                    )}
                                 </CardBody>
                             </Card>
                         ) : (
@@ -271,7 +200,7 @@ export default function IncidentDetailScreen() {
                                                     Assigned to: {task.assignee}
                                                 </Text>
                                             </View>
-                                            <Button size="sm" variant="outline" onPress={() => router.push(`/(supervisor)/tasks/${task.id}`)}>
+                                            <Button size="sm" variant="outline" onPress={() => router.push(`/(tabs)/tasks/${task.id}`)}>
                                                 View
                                             </Button>
                                         </View>
@@ -416,11 +345,6 @@ const styles = StyleSheet.create({
     dateValue: {
         fontSize: 13,
         color: '#4A5568',
-    },
-    actionRow: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 8,
     },
     closedBanner: {
         flex: 1,

@@ -18,7 +18,7 @@ namespace HazardEye.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -272,7 +272,7 @@ namespace HazardEye.API.Migrations
                     b.Property<string>("IncidentId")
                         .HasColumnType("text");
 
-                    b.Property<List<string>>("MediaUris")
+                    b.PrimitiveCollection<string>("MediaUris")
                         .IsRequired()
                         .HasColumnType("jsonb");
 
