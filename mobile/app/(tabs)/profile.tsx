@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Image, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Image, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { useDeviceStore } from '../../src/store/useDeviceStore';
+import { syncData } from '../../src/services/SyncService';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -15,6 +16,7 @@ export default function ProfileScreen() {
     const [userRole, setUserRole] = useState('Inspector');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [autoUploadEnabled, setAutoUploadEnabled] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -54,6 +56,28 @@ export default function ProfileScreen() {
             "Contact Safety Officer:\n\nPhone: +1 (555) 012-3456\nEmail: safety@refinery.com\n\nHours: 24/7",
             [{ text: "Call", onPress: () => console.log("Call stub") }, { text: "OK" }]
         );
+    };
+
+    const handleSyncAll = async () => {
+        setIsSyncing(true);
+        try {
+            await syncData(() => {
+                refreshDeviceData();
+                setIsSyncing(false);
+                Alert.alert(
+                    "Sync Complete",
+                    "All data has been synchronized with the server.",
+                    [{ text: "OK" }]
+                );
+            });
+        } catch (error) {
+            setIsSyncing(false);
+            Alert.alert(
+                "Sync Failed",
+                "Could not sync data. Please check your connection and try again.",
+                [{ text: "OK" }]
+            );
+        }
     };
 
     return (
@@ -187,22 +211,29 @@ export default function ProfileScreen() {
                     <Ionicons name="chevron-forward" size={20} color="#CBD5E0" />
                 </TouchableOpacity>
 
-                {/* Offline Warning */}
-                <View style={styles.offlineBanner}>
-                    <View style={styles.offlineHeader}>
-                        <View style={styles.offlineIcon}>
-                            <Text style={styles.offlineIconText}>OFF</Text>
+                {/* Sync All Button */}
+                <TouchableOpacity 
+                    style={[styles.syncButton, isSyncing && styles.syncButtonDisabled]} 
+                    onPress={handleSyncAll}
+                    disabled={isSyncing}
+                >
+                    <View style={styles.syncButtonContent}>
+                        {isSyncing ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Ionicons name="cloud-upload-outline" size={24} color="#fff" />
+                        )}
+                        <View style={styles.syncTextContainer}>
+                            <Text style={styles.syncButtonTitle}>
+                                {isSyncing ? 'Syncing...' : 'Sync All Data'}
+                            </Text>
+                            <Text style={styles.syncButtonSubtitle}>
+                                {isSyncing ? 'Uploading and downloading' : 'Upload reports & download latest data'}
+                            </Text>
                         </View>
-                        <Text style={styles.offlineTitle}>Offline Mode Active</Text>
                     </View>
-                    <Text style={styles.offlineText}>
-                        Reports are stored locally and will sync when network connection is available.
-                    </Text>
-                    <View style={styles.pendingRow}>
-                        <Ionicons name="ellipse" size={8} color="#D69E2E" />
-                        <Text style={styles.pendingText}>12 reports pending sync</Text>
-                    </View>
-                </View>
+                </TouchableOpacity>
+
 
                 {/* Logout/Switch Account Button */}
                 <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -395,5 +426,38 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
         letterSpacing: 0.5,
+    },
+    syncButton: {
+        backgroundColor: '#2563EB',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        shadowColor: '#2563EB',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    syncButtonDisabled: {
+        backgroundColor: '#93C5FD',
+        shadowOpacity: 0.1,
+    },
+    syncButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    syncTextContainer: {
+        flex: 1,
+    },
+    syncButtonTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    syncButtonSubtitle: {
+        fontSize: 13,
+        color: '#DBEAFE',
     },
 });

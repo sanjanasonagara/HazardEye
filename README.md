@@ -2,9 +2,10 @@
 
 Hazard-Eye is a comprehensive safety management platform consisting of a localized mobile app for reporting, a web dashboard for supervisors, and a .NET backend for data processing.
 
-##  Project Structure
+## Project Structure
 
 ### 1. Backend (`/backend/HazardEye.API`)
+
 Built with **.NET 8 Web API**. Handles authentication, incident management, and real-time updates via SignalR.
 
 - **`Controllers/`**: HTTP API endpoints.
@@ -22,41 +23,45 @@ Built with **.NET 8 Web API**. Handles authentication, incident management, and 
 - **`Migrations/`**: EF Core database migration files.
 
 ### 2. Mobile App (`/mobile`)
+
 Built with **React Native (Expo)**. Used by field workers and supervisors.
 
 - **`app/`**: Expo Router file-based routing.
-    - **`(supervisor)/`**: Routes specific to supervisors (e.g., verifying reports).
-    - **`(tabs)/`**: Main tab navigation for workers (Home, History, Profile).
-    - **`incidents/`**: Incident details and lists.
-    - **`report/`**: Incident reporting form.
-    - **`login.tsx`**: Authentication screen.
+  - **`(supervisor)/`**: Routes specific to supervisors (e.g., verifying reports).
+  - **`(tabs)/`**: Main tab navigation for workers (Home, History, Profile).
+  - **`incidents/`**: Incident details and lists.
+  - **`report/`**: Incident reporting form.
+  - **`login.tsx`**: Authentication screen.
 - **`src/`**: Shared source code.
-    - **`components/`**: Reusable UI components.
-    - **`hooks/`**: Custom React hooks.
-    - **`services/`**: API integration services.
-    - **`types/`**: TypeScript interfaces.
+  - **`components/`**: Reusable UI components.
+  - **`hooks/`**: Custom React hooks.
+  - **`services/`**: API integration services.
+  - **`types/`**: TypeScript interfaces.
 - **`assets/`**: Images, fonts, and icons.
 
 ### 3. Web Portal (`/webPortal`)
+
 Built with **React + TypeScript + Vite**. Admin and Supervisor dashboard.
 
 - **`src/`**: output source code.
-    - **`admin/`**: Admin-specific views (User management, system settings).
-    - **`supervisor/`**: Supervisor dashboard.
-        - **`Dashboard.tsx`**: Main overview with charts and stats.
-        - **`Incidents.tsx`**: Comprehensive incident table.
-    - **`employee/`**: Employee-specific views (Task lists).
-    - **`shared/`**: Reusable UI components (Buttons, Inputs, Modals) and contexts (AuthContext).
-    - **`auth/`**: Login page and authentication logic.
+  - **`admin/`**: Admin-specific views (User management, system settings).
+  - **`supervisor/`**: Supervisor dashboard.
+    - **`Dashboard.tsx`**: Main overview with charts and stats.
+    - **`Incidents.tsx`**: Comprehensive incident table.
+  - **`employee/`**: Employee-specific views (Task lists).
+  - **`shared/`**: Reusable UI components (Buttons, Inputs, Modals) and contexts (AuthContext).
+  - **`auth/`**: Login page and authentication logic.
 - **`public/`**: Static assets.
 
 ## Getting Started
 
 ### Prerequisites
 
-- .NET 8 SDK
-- Node.js & npm
-- PostgreSQL (running on default port 5432)
+- **.NET SDK**: 10.0.101 or higher
+- **Node.js**: 25.2.1 or higher
+- **npm**: 11.6.2 or higher
+- **PostgreSQL**: 14.15 or higher (running on default port 5432)
+- **Expo CLI**: 6.3.12 or higher (for mobile development)
 
 ### 1. Database Setup
 
@@ -90,7 +95,6 @@ cd mobile
 npm install expo
 npx expo start
 ```
-
 
 - `npm install` will automatically fix Gradle permissions.
 - See `mobile/README.md` for detailed troubleshooting and cross-platform setup.

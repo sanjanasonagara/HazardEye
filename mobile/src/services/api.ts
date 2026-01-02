@@ -6,19 +6,23 @@ import Constants from 'expo-constants';
 
 const getBaseUrl = () => {
     // If we have a hostUri (Expo Go / Development), use that IP
-    const hostUri = Constants.expoConfig?.hostUri;
+    const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
     if (hostUri) {
         const ip = hostUri.split(':')[0];
-        // Ensure this port matches your backend server
-        return `http://${ip}:5200/api`;
+        const url = `http://${ip}:5200/api`;
+        console.log('API Service: Determined URL from hostUri:', url);
+        return url;
     }
 
-    // Fallback for scenarios where hostUri isn't available (e.g. standalone builds vs localhost)
-    return Platform.select({
+    // Fallback for scenarios where hostUri isn't available
+    const url = Platform.select({
         android: 'http://10.0.2.2:5200/api',
         ios: 'http://localhost:5200/api',
         default: 'http://localhost:5200/api',
-    });
+    }) || 'http://localhost:5200/api';
+    
+    console.log('API Service: Using fallback URL:', url);
+    return url;
 };
 
 const BASE_URL = getBaseUrl();
@@ -50,15 +54,6 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             console.warn('API Context - 401 Unauthorized detected.');
             await SecureStore.deleteItemAsync('token');
-            // Force navigation to login
-            try {
-                // We use dynamic import or check if router is available, 
-                // but standard import should work if this file is not circular dependency
-                const { router } = require('expo-router');
-                router.replace('/login');
-            } catch (navError) {
-                console.error("Navigation error", navError);
-            }
         }
         return Promise.reject(error);
     }

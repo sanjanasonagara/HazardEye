@@ -134,6 +134,38 @@ export default function SupervisorIncidentsScreen() {
         ]);
     };
 
+    const handleMarkComplete = (id: string) => {
+        Alert.alert("Mark Complete", "This will verify and close this incident as resolved. Continue?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "Mark Complete",
+                style: 'default',
+                onPress: async () => {
+                    try {
+                        // Get the incident to find its server_id
+                        const incident = incidents.find(i => i.id === id);
+                        if (!incident) return;
+
+                        // Update backend if we have a server_id
+                        if (incident.server_id) {
+                            const { default: api } = await import('../../src/services/api');
+                            await api.patch(`/incidents/${incident.server_id}/status`, {
+                                status: 'Closed'
+                            });
+                        }
+
+                        // Update local database
+                        await updateIncidentStatus(id, 'closed');
+                        await loadData();
+                    } catch (error) {
+                        console.error('Failed to mark incident complete:', error);
+                        Alert.alert('Error', 'Failed to update incident status. Please try again.');
+                    }
+                }
+            }
+        ]);
+    };
+
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'verified': return { bg: '#C6F6D5', text: '#2F855A' };
@@ -237,13 +269,26 @@ export default function SupervisorIncidentsScreen() {
                 {/* Actions */}
                 <View style={styles.actionRow}>
                     {status === 'open' && (
-                        <TouchableOpacity style={styles.verifyBtn} onPress={() => handleVerify(item.id)}>
-                            <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                            <Text style={styles.btnText}>VERIFY</Text>
+                        <>
+                            <TouchableOpacity style={styles.verifyBtn} onPress={() => handleVerify(item.id)}>
+                                <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                                <Text style={styles.btnText}>VERIFY</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.completeBtn} onPress={() => handleMarkComplete(item.id)}>
+                                <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
+                                <Text style={styles.btnText}>MARK COMPLETE</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
+
+                    {status === 'verified' && (
+                        <TouchableOpacity style={styles.completeBtn} onPress={() => handleMarkComplete(item.id)}>
+                            <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
+                            <Text style={styles.btnText}>MARK COMPLETE</Text>
                         </TouchableOpacity>
                     )}
 
-                    {status !== 'closed' && (
+                    {status !== 'closed' && status !== 'open' && status !== 'verified' && (
                         <TouchableOpacity style={styles.closeBtn} onPress={() => handleClose(item.id)}>
                             <Ionicons name="close-circle-outline" size={16} color="#fff" />
                             <Text style={styles.btnText}>CLOSE</Text>
@@ -497,5 +542,39 @@ const styles = StyleSheet.create({
     sevLow: {
         borderColor: '#90CDF4',
         backgroundColor: '#EBF8FF',
-    }
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
+    workerDashboardBtn: {
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    workerDashboardText: {
+        color: '#2563EB',
+        fontWeight: '600',
+        fontSize: 13,
+    },
+    completeBtn: {
+        backgroundColor: '#38A169',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+        gap: 4,
+    },
 });

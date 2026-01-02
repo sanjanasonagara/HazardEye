@@ -350,6 +350,11 @@ export default function TaskDetailScreen() {
                     <Badge variant={task.status as any}>{task.status}</Badge>
                     <Badge variant={task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase() as any}>{task.priority}</Badge>
                 </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {task.status !== 'Completed' && (
+                        <Button onPress={handleMarkDone} size="sm" style={{ backgroundColor: '#48BB78' }}>Done</Button>
+                    )}
+                </View>
             </View>
 
             {renderTabs()}

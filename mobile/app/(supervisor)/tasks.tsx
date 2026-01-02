@@ -3,8 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { getTasks, Task, createTask } from '../../src/services/Database';
-import { locationService, Location as ManagedLocation } from '../../src/services/LocationService';
+import { getTasks, Task, createTask, getUsers, MobileUser, getLocations, Location } from '../../src/services/Database';
 import { Card, CardHeader, CardBody } from '../../src/components/UI/Card';
 import { Badge } from '../../src/components/UI/Badge';
 import { Button } from '../../src/components/UI/Button';
@@ -16,14 +15,13 @@ type Priority = 'High' | 'Medium' | 'Low';
 const statuses: TaskStatus[] = ['Open', 'In Progress', 'Completed', 'Delayed'];
 const priorities: Priority[] = ['High', 'Medium', 'Low'];
 
-
+const AREA_OPTIONS = ['Sector 7', 'Storage Area B', 'Main Hall', 'Pump House', 'Control Room'];
+const PLANT_OPTIONS = ['Main Refinery', 'East Wing', 'West Wing', 'North Plant'];
 
 export default function SupervisorTasksScreen() {
     const params = useLocalSearchParams();
     const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [locations, setLocations] = useState<ManagedLocation[]>([]);
-    const [isLoadingLocations, setIsLoadingLocations] = useState(true);
     const [isCreateModalVisible, setCreateModalVisible] = useState(false);
     const [isAreaPickerVisible, setAreaPickerVisible] = useState(false);
     const [isPlantPickerVisible, setPlantPickerVisible] = useState(false);
@@ -130,7 +128,7 @@ export default function SupervisorTasksScreen() {
         Alert.alert("Success", "Task created successfully.");
     };
 
-    const [users, setUsers] = useState<{ id: number; firstName: string; lastName: string }[]>([]);
+    const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string; employeeId?: string; department?: string }[]>([]);
     const [isAssigneePickerVisible, setAssigneePickerVisible] = useState(false);
 
     const resetForm = () => {
@@ -144,6 +142,8 @@ export default function SupervisorTasksScreen() {
         setIncidentId(null);
     };
 
+    const [availableLocations, setAvailableLocations] = useState<Location[]>([]);
+
     useFocusEffect(
         useCallback(() => {
             loadTasks();
@@ -153,28 +153,37 @@ export default function SupervisorTasksScreen() {
     );
 
     const loadLocations = async () => {
-        try {
-            const locs = await locationService.getLocations();
-            setLocations(locs.filter(l => l.active));
-        } catch (e: any) {
-            console.error("Failed to load locations", e);
-            Alert.alert("Sync Error", "Failed to load locations: " + (e.message || "Unknown error"));
-        } finally {
-            setIsLoadingLocations(false);
-        }
+        const locs = await getLocations();
+        setAvailableLocations(locs);
     };
 
     const loadUsers = async () => {
+        const localUsers = await getUsers();
+        if (localUsers.length > 0) {
+            setUsers(localUsers.map(u => ({ 
+                id: u.id, 
+                firstName: u.name, 
+                lastName: '', 
+                employeeId: u.employee_id, 
+                department: u.department 
+            })));
+        }
+        
         try {
-            // Import api dynamically or use the imported instance if accessible
             const { default: api } = await import('../../src/services/api');
-            // Use UsersController which allows Supervisor access, unlike AuthController which is Admin/SafetyOfficer only
-            const response = await api.get('/users?role=Worker');
-            if (response.data) {
-                setUsers(response.data);
+            const response = await api.get('/users'); 
+            if (response.data && Array.isArray(response.data)) {
+                const mapped = response.data.map((u: any) => ({
+                    id: String(u.id),
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                    employeeId: u.employeeId,
+                    department: u.company || u.department
+                }));
+                setUsers(mapped);
             }
         } catch (error) {
-            console.log('Failed to load users: not online or authorized', error);
+            console.log('Failed to fetch users from server, using local cache');
         }
     };
 
@@ -440,23 +449,20 @@ export default function SupervisorTasksScreen() {
                     <View style={styles.pickerModalContent}>
                         <Text style={styles.pickerModalTitle}>Select Area</Text>
                         <FlatList
-                            data={locations.filter(l => l.type !== 'Plant')}
-                            keyExtractor={(item) => item.id}
+                            data={availableLocations.length > 0 ? Array.from(new Set(availableLocations.map(l => l.parent_name || 'Main Site'))) : AREA_OPTIONS}
+                            keyExtractor={(item) => item}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.pickerItem}
                                     onPress={() => {
-                                        setNewArea(item.name);
+                                        setNewArea(item);
                                         setAreaPickerVisible(false);
                                     }}
                                 >
-                                    <View>
-                                        <Text style={[styles.pickerItemText, newArea === item.name && styles.pickerItemTextActive]}>
-                                            {item.name}
-                                        </Text>
-                                        {item.parentLocationName && <Text style={{fontSize: 12, color: '#A0AEC0'}}>Sub of {item.parentLocationName}</Text>}
-                                    </View>
-                                    {newArea === item.name && <Ionicons name="checkmark" size={20} color="#2563EB" />}
+                                    <Text style={[styles.pickerItemText, newArea === item && styles.pickerItemTextActive]}>
+                                        {item}
+                                    </Text>
+                                    {newArea === item && <Ionicons name="checkmark" size={20} color="#2563EB" />}
                                 </TouchableOpacity>
                             )}
                         />
@@ -479,20 +485,20 @@ export default function SupervisorTasksScreen() {
                     <View style={styles.pickerModalContent}>
                         <Text style={styles.pickerModalTitle}>Select Plant</Text>
                         <FlatList
-                            data={locations.filter(l => l.type === 'Plant')}
-                            keyExtractor={(item) => item.id}
+                            data={availableLocations.length > 0 ? availableLocations.filter(l => !newArea || l.parent_name === newArea).map(l => l.name) : PLANT_OPTIONS}
+                            keyExtractor={(item) => item}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.pickerItem}
                                     onPress={() => {
-                                        setNewPlant(item.name);
+                                        setNewPlant(item);
                                         setPlantPickerVisible(false);
                                     }}
                                 >
-                                    <Text style={[styles.pickerItemText, newPlant === item.name && styles.pickerItemTextActive]}>
-                                        {item.name}
+                                    <Text style={[styles.pickerItemText, newPlant === item && styles.pickerItemTextActive]}>
+                                        {item}
                                     </Text>
-                                    {newPlant === item.name && <Ionicons name="checkmark" size={20} color="#2563EB" />}
+                                    {newPlant === item && <Ionicons name="checkmark" size={20} color="#2563EB" />}
                                 </TouchableOpacity>
                             )}
                         />
@@ -577,7 +583,10 @@ export default function SupervisorTasksScreen() {
                                                 <Text style={[styles.pickerItemText, newAssignee === fullName && styles.pickerItemTextActive]}>
                                                     {fullName}
                                                 </Text>
-                                                <Text style={{fontSize: 12, color: '#A0AEC0'}}>ID: {item.id}</Text>
+                                                <Text style={{fontSize: 12, color: '#A0AEC0'}}>
+                                                    {item.employeeId ? `ID: ${item.employeeId}` : `User ID: ${item.id}`} 
+                                                    {item.department ? ` | ${item.department}` : ''}
+                                                </Text>
                                             </View>
                                             {newAssignee === fullName && <Ionicons name="checkmark" size={20} color="#2563EB" />}
                                         </TouchableOpacity>

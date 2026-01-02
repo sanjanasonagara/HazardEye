@@ -3,10 +3,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
-import { getIncidentById, updateIncident, saveIncident, Incident } from '../src/services/Database';
-import { locationService, Location as ManagedLocation } from '../src/services/LocationService';
+import { getIncidentById, updateIncident, saveIncident, Incident, getLocations, Location } from '../src/services/Database';
 
-
+// Mock locations
+const LOCATIONS = [
+    "Unit A-1 Processing",
+    "Unit A-2 Storage",
+    "Unit B-5 Reactor",
+    "Control Room",
+    "Maintenance Bay",
+    "Storage Yard",
+    "Loading Dock",
+    "Administration"
+];
 
 export default function ReviewScreen() {
     const router = useRouter();
@@ -18,29 +27,18 @@ export default function ReviewScreen() {
     const [description, setDescription] = useState('');
     const [severity, setSeverity] = useState<number>(1); // 1=Low, 2=Medium, 3=High
     const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+    const [locations, setLocations] = useState<Location[]>([]);
     const [incidentId, setIncidentId] = useState(`INC-${Math.floor(Math.random() * 900000) + 100000}`);
     const [timestamp] = useState(new Date());
     const [isEditing, setIsEditing] = useState(false);
     const [displayImage, setDisplayImage] = useState<string | null>(imageUri || null);
-    const [locations, setLocations] = useState<ManagedLocation[]>([]);
-    const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
-    // Initialize data
+    // Load CMS Locations and existing data
     useEffect(() => {
-        const init = async () => {
-            // 1. Fetch managed locations
-            try {
-                const managedLocs = await locationService.getLocations();
-                console.log('[ReviewScreen] Total locations fetched:', managedLocs.length);
-                const activeLocs = managedLocs.filter(l => l.active);
-                console.log('[ReviewScreen] Active locations:', activeLocs.length);
-                setLocations(activeLocs);
-            } catch (e: any) {
-                console.error("Failed to load locations", e);
-                Alert.alert("Sync Error", "Failed to load locations: " + (e.message || "Unknown error"));
-            } finally {
-                setIsLoadingLocations(false);
-            }
+        const loadDta = async () => {
+            // 1. Load Locations
+            const dbLocations = await getLocations();
+            setLocations(dbLocations);
 
             // 2. Load existing incident if editing
             if (existingId) {
@@ -50,8 +48,9 @@ export default function ReviewScreen() {
                     setSeverity(incident.severity);
                     setDescription(incident.note || '');
                     
-                    const label = [incident.plant, incident.area].filter(Boolean).join(' • ');
-                    setSelectedLocation(label || null);
+                    if (incident.plant) {
+                        setSelectedLocation(incident.plant);
+                    }
 
                     if (incident.media_uris) {
                         try {
@@ -65,7 +64,7 @@ export default function ReviewScreen() {
                 }
             }
         };
-        init();
+        loadDta();
     }, [existingId]);
 
     const handleSave = async () => {
@@ -74,22 +73,22 @@ export default function ReviewScreen() {
             return;
         }
 
+        // Find selected location details
+        const loc = locations.find(l => l.name === selectedLocation);
+
         if (isEditing) {
             const updatedIncident: Incident = {
-  id: incidentId,
-  created_at: timestamp.toISOString(),
-  media_uris: JSON.stringify([]),
-
-  severity,
-  sync_status: 'pending',
-  status: 'open',
-
-  note: description,
-  plant: selectedLocation || '',
-  area: '',
-  department: '',
-};
-
+                id: incidentId,
+                created_at: timestamp.toISOString(),
+                media_uris: JSON.stringify([displayImage || '']),
+                severity,
+                sync_status: 'pending',
+                status: 'open',
+                note: description,
+                plant: selectedLocation || '',
+                area: loc?.parent_name || 'Main Site',
+                department: loc?.type || 'Other',
+            };
 
             try {
                 await updateIncident(updatedIncident);
@@ -102,23 +101,17 @@ export default function ReviewScreen() {
             }
         } else {
            const newIncident: Incident = {
-  id: incidentId,
-  created_at: timestamp.toISOString(),
-  media_uris: JSON.stringify([imageUri || '']),
-
-  severity,
-  sync_status: 'pending',
-  status: 'open',
-
-  // WHAT happened
-  note: description,
-
-  // WHERE it happened
-  plant: selectedLocation || '',
-  area: '',
-  department: '',
-};
-
+                id: incidentId,
+                created_at: timestamp.toISOString(),
+                media_uris: JSON.stringify([imageUri || '']),
+                severity,
+                sync_status: 'pending',
+                status: 'open',
+                note: description,
+                plant: selectedLocation || '',
+                area: loc?.parent_name || 'Main Site',
+                department: loc?.type || 'Other',
+            };
 
             try {
                 await saveIncident(newIncident);
@@ -221,37 +214,40 @@ export default function ReviewScreen() {
                 {/* Location */}
                 <View style={styles.card}>
                     <Text style={styles.label}>Location / Unit</Text>
-                    {isLoadingLocations ? (
-                        <Text style={styles.loadingText}>Fetching managed locations...</Text>
-                    ) : (
-                        <View style={styles.locationList}>
-                            {locations.length > 0 ? (
-                                locations.map((loc) => {
-                                    const label = loc.parentLocationName ? `${loc.parentLocationName} • ${loc.name}` : loc.name;
-                                    return (
-                                        <TouchableOpacity
-                                            key={loc.id}
-                                            style={styles.locationItem}
-                                            onPress={() => setSelectedLocation(label)}
-                                        >
-                                            <View style={styles.locationRow}>
-                                                <Ionicons name="location-outline" size={20} color="#4B5563" />
-                                                <View>
-                                                    <Text style={styles.locationText}>{loc.name}</Text>
-                                                    {loc.parentLocationName && (
-                                                        <Text style={styles.parentText}>{loc.parentLocationName}</Text>
-                                                    )}
-                                                </View>
-                                            </View>
-                                            <View style={[styles.radio, selectedLocation === label && styles.radioSelected]} />
-                                        </TouchableOpacity>
-                                    );
-                                })
-                            ) : (
-                                <Text style={styles.noDataText}>No managed locations found. Please add them in Admin CMS.</Text>
-                            )}
-                        </View>
-                    )}
+                    <View style={styles.locationList}>
+                        {locations.length > 0 ? (
+                            locations.map((loc, index) => (
+                                <TouchableOpacity
+                                    key={loc.id || index}
+                                    style={styles.locationItem}
+                                    onPress={() => setSelectedLocation(loc.name)}
+                                >
+                                    <View style={styles.locationRow}>
+                                        <Ionicons name="location-outline" size={20} color="#4B5563" />
+                                        <Text style={styles.locationText}>{loc.name}</Text>
+                                    </View>
+                                    <View style={[styles.radio, selectedLocation === loc.name && styles.radioSelected]} />
+                                </TouchableOpacity>
+                            ))
+                        ) : (
+                            <View style={styles.emptyLocation}>
+                                <Text style={styles.emptyText}>Pull from CMS to see locations</Text>
+                            </View>
+                        )}
+                        {/* Fallback option if CMS empty or for extra flexibility */}
+                        {locations.length === 0 && (
+                            <TouchableOpacity
+                                style={styles.locationItem}
+                                onPress={() => setSelectedLocation("General Area")}
+                            >
+                                <View style={styles.locationRow}>
+                                    <Ionicons name="map-outline" size={20} color="#4B5563" />
+                                    <Text style={styles.locationText}>General Area</Text>
+                                </View>
+                                <View style={[styles.radio, selectedLocation === "General Area" && styles.radioSelected]} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
 
                 {/* Timestamp */}
@@ -523,19 +519,12 @@ const styles = StyleSheet.create({
         marginTop: 4,
         backgroundColor: '#F3F4F6',
     },
-    loadingText: {
-        textAlign: 'center',
-        color: '#6B7280',
+    emptyLocation: {
         padding: 20,
+        alignItems: 'center',
     },
-    noDataText: {
-        textAlign: 'center',
-        padding: 20,
+    emptyText: {
         color: '#9CA3AF',
         fontStyle: 'italic',
-    },
-    parentText: {
-        fontSize: 12,
-        color: '#6B7280',
     },
 });

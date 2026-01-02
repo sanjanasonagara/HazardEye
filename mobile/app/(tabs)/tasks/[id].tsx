@@ -190,17 +190,13 @@ export default function WorkerTaskDetailScreen() {
                             <Text style={styles.emptyText}>No comments yet.</Text>
                         ) : (
                             <View style={{ gap: 12 }}>
-                                {comments.map((comment: any, i) => {
-                                    const isNewFormat = typeof comment === 'object' && comment !== null && 'text' in comment;
-                                    const text = isNewFormat ? comment.text : comment as string;
-                                    const timestamp = isNewFormat ? comment.timestamp : null;
+                                {comments.map((c, i) => {
+                                    const isNewFormat = typeof c === 'object' && c !== null && 'text' in c;
+                                    const text = isNewFormat ? c.text : c as string;
+                                    const timestamp = isNewFormat ? c.timestamp : null;
 
                                     return (
                                         <View key={i} style={styles.commentBox}>
-                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                                <Text style={{ fontWeight: 'bold', fontSize: 13, color: '#2D3748' }}>{comment.userName || 'Unknown'}</Text>
-                                                <Badge variant="default" style={{ height: 16, paddingHorizontal: 4 }}><Text style={{ fontSize: 8 }}>{comment.userRole || 'User'}</Text></Badge>
-                                            </View>
                                             <Text style={styles.commentContent}>{text}</Text>
                                             {timestamp && !isNaN(new Date(timestamp).getTime()) && (
                                                 <Text style={styles.commentTime}>

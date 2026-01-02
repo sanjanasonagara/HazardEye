@@ -53,22 +53,23 @@ export default function CaptureScreen() {
     return (
         <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
-            <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
-            <SafeAreaView style={styles.overlay} edges={['bottom', 'top']}>
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.iconButton} onPress={toggleCameraFacing}>
-                        <Ionicons name="camera-reverse" size={32} color="white" />
-                    </TouchableOpacity>
+            <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
+                <SafeAreaView style={styles.safeContainer} edges={['bottom', 'top']}>
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity style={styles.iconButton} onPress={toggleCameraFacing}>
+                            <Ionicons name="camera-reverse" size={32} color="white" />
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                        <View style={styles.captureInner} />
-                    </TouchableOpacity>
+                        <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                            <View style={styles.captureInner} />
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
-                        <Ionicons name="close" size={32} color="white" />
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
+                        <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+                            <Ionicons name="close" size={32} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </SafeAreaView>
+            </CameraView>
         </View>
     );
 }
@@ -83,12 +84,11 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     camera: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
     },
-    overlay: {
+    safeContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'transparent',
     },
     buttonContainer: {
         flexDirection: 'row',

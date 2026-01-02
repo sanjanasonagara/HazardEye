@@ -47,9 +47,59 @@ export interface TaskComment {
     timestamp: string;
 }
 
-// Initial Mock Data (Empty now as we use real managed data)
-let incidents: Incident[] = [];
-let tasks: Task[] = [];
+// Initial Mock Data
+let incidents: Incident[] = [
+    {
+        id: 'INC-2023-001',
+        created_at: new Date().toISOString(),
+        media_uris: JSON.stringify(['https://via.placeholder.com/400']),
+        ml_metadata: JSON.stringify({
+            whatToDo: "Isolate the area.",
+            whyItMatters: "High pressure leak detected.",
+            riskExplanation: "Risk of explosion.",
+            preventiveSteps: ["Turn off main valve", "Evacuate personnel"]
+        }),
+        advisory: 'Detected leak in Sector 7',
+        severity: 0.8,
+        sync_status: 'synced',
+        status: 'open',
+        note: 'Requires immediate attention.',
+        department: 'Mechanical',
+        area: 'Sector 7',
+        plant: 'Main Refinery'
+    },
+    {
+        id: 'INC-2023-002',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        media_uris: '[]',
+        ml_metadata: '{}',
+        advisory: 'Minor spill reported',
+        severity: 0.3,
+        sync_status: 'pending',
+        status: 'verified',
+        note: 'Cleanup crew assigned.',
+        department: 'Environmental',
+        area: 'Storage Area B',
+        plant: 'East Wing'
+    }
+];
+
+let tasks: Task[] = [
+    {
+        id: 'T-1001',
+        title: 'Inspect Valve A',
+        assignee: 'John Doe',
+        description: 'Check for pressure irregularities in Valve A.',
+        priority: 'High',
+        status: 'Open',
+        due_date: new Date().toISOString(),
+        comments: '[]',
+        area: 'Sector 7',
+        plant: 'Main Refinery',
+        precautions: 'Wear PPE',
+        incident_id: 'INC-2023-001'
+    }
+];
 
 export const initDatabase = () => {
     console.log('Database initialized (Mock Mode)');
