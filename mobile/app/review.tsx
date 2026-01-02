@@ -4,18 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { getIncidentById, updateIncident, saveIncident, Incident } from '../src/services/Database';
+import { locationService, Location as ManagedLocation } from '../src/services/LocationService';
 
-// Mock locations
-const LOCATIONS = [
-    "Unit A-1 Processing",
-    "Unit A-2 Storage",
-    "Unit B-5 Reactor",
-    "Control Room",
-    "Maintenance Bay",
-    "Storage Yard",
-    "Loading Dock",
-    "Administration"
-];
+
 
 export default function ReviewScreen() {
     const router = useRouter();
@@ -31,22 +22,36 @@ export default function ReviewScreen() {
     const [timestamp] = useState(new Date());
     const [isEditing, setIsEditing] = useState(false);
     const [displayImage, setDisplayImage] = useState<string | null>(imageUri || null);
+    const [locations, setLocations] = useState<ManagedLocation[]>([]);
+    const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
-    // Load existing data if editing
+    // Initialize data
     useEffect(() => {
-        const loadIncidentData = async () => {
+        const init = async () => {
+            // 1. Fetch managed locations
+            try {
+                const managedLocs = await locationService.getLocations();
+                console.log('[ReviewScreen] Total locations fetched:', managedLocs.length);
+                const activeLocs = managedLocs.filter(l => l.active);
+                console.log('[ReviewScreen] Active locations:', activeLocs.length);
+                setLocations(activeLocs);
+            } catch (e: any) {
+                console.error("Failed to load locations", e);
+                Alert.alert("Sync Error", "Failed to load locations: " + (e.message || "Unknown error"));
+            } finally {
+                setIsLoadingLocations(false);
+            }
+
+            // 2. Load existing incident if editing
             if (existingId) {
                 const incident = await getIncidentById(existingId);
                 if (incident) {
                     setIncidentId(incident.id);
-
                     setSeverity(incident.severity);
                     setDescription(incident.note || '');
-setSelectedLocation(
-  [incident.plant, incident.area, incident.department]
-    .filter(Boolean)
-    .join(' • ') || null
-);
+                    
+                    const label = [incident.plant, incident.area].filter(Boolean).join(' • ');
+                    setSelectedLocation(label || null);
 
                     if (incident.media_uris) {
                         try {
@@ -60,7 +65,7 @@ setSelectedLocation(
                 }
             }
         };
-        loadIncidentData();
+        init();
     }, [existingId]);
 
     const handleSave = async () => {
@@ -216,21 +221,37 @@ setSelectedLocation(
                 {/* Location */}
                 <View style={styles.card}>
                     <Text style={styles.label}>Location / Unit</Text>
-                    <View style={styles.locationList}>
-                        {LOCATIONS.map((loc, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.locationItem}
-                                onPress={() => setSelectedLocation(loc)}
-                            >
-                                <View style={styles.locationRow}>
-                                    <Ionicons name="location-outline" size={20} color="#4B5563" />
-                                    <Text style={styles.locationText}>{loc}</Text>
-                                </View>
-                                <View style={[styles.radio, selectedLocation === loc && styles.radioSelected]} />
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                    {isLoadingLocations ? (
+                        <Text style={styles.loadingText}>Fetching managed locations...</Text>
+                    ) : (
+                        <View style={styles.locationList}>
+                            {locations.length > 0 ? (
+                                locations.map((loc) => {
+                                    const label = loc.parentLocationName ? `${loc.parentLocationName} • ${loc.name}` : loc.name;
+                                    return (
+                                        <TouchableOpacity
+                                            key={loc.id}
+                                            style={styles.locationItem}
+                                            onPress={() => setSelectedLocation(label)}
+                                        >
+                                            <View style={styles.locationRow}>
+                                                <Ionicons name="location-outline" size={20} color="#4B5563" />
+                                                <View>
+                                                    <Text style={styles.locationText}>{loc.name}</Text>
+                                                    {loc.parentLocationName && (
+                                                        <Text style={styles.parentText}>{loc.parentLocationName}</Text>
+                                                    )}
+                                                </View>
+                                            </View>
+                                            <View style={[styles.radio, selectedLocation === label && styles.radioSelected]} />
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            ) : (
+                                <Text style={styles.noDataText}>No managed locations found. Please add them in Admin CMS.</Text>
+                            )}
+                        </View>
+                    )}
                 </View>
 
                 {/* Timestamp */}
@@ -501,5 +522,20 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginTop: 4,
         backgroundColor: '#F3F4F6',
+    },
+    loadingText: {
+        textAlign: 'center',
+        color: '#6B7280',
+        padding: 20,
+    },
+    noDataText: {
+        textAlign: 'center',
+        padding: 20,
+        color: '#9CA3AF',
+        fontStyle: 'italic',
+    },
+    parentText: {
+        fontSize: 12,
+        color: '#6B7280',
     },
 });

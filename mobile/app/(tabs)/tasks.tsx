@@ -1,14 +1,16 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { getTasks, Task, updateTaskStatus, addTaskComment, reportTaskDelay, TaskComment } from '../../src/services/Database';
+import { syncData } from '../../src/services/SyncService';
 
 export default function TasksScreen() {
     const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [showCompleted, setShowCompleted] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Modal State
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -19,13 +21,34 @@ export default function TasksScreen() {
 
     useFocusEffect(
         useCallback(() => {
-            loadTasks();
+            const init = async () => {
+                setRefreshing(true);
+                // Trigger sync to get latest tasks
+                await syncData();
+                // Load local tasks
+                await loadTasks();
+                setRefreshing(false);
+            };
+            init();
         }, [])
     );
 
     const loadTasks = async () => {
-        const data = await getTasks();
-        setTasks(data);
+        try {
+            const data = await getTasks();
+            console.log(`[TasksScreen] Loaded ${data.length} tasks from local DB`);
+            setTasks(data);
+        } catch (e) {
+            console.error('[TasksScreen] Error loading tasks:', e);
+        }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        console.log('[TasksScreen] Manual refresh triggered');
+        await syncData();
+        await loadTasks();
+        setRefreshing(false);
     };
 
     const handleComplete = async (id: string) => {
@@ -79,9 +102,9 @@ export default function TasksScreen() {
 
     const stats = useMemo(() => {
         return {
-            high: tasks.filter(t => t.priority === 'high' && t.status !== 'completed').length,
-            inProgress: tasks.filter(t => t.status === 'in_progress').length,
-            completed: tasks.filter(t => t.status === 'completed').length
+            high: tasks.filter(t => t.priority === 'high' && t.status.toLowerCase() !== 'completed').length,
+            inProgress: tasks.filter(t => t.status.toLowerCase() === 'in_progress').length,
+            completed: tasks.filter(t => t.status.toLowerCase() === 'completed').length
         };
     }, [tasks]);
 
@@ -172,7 +195,7 @@ export default function TasksScreen() {
                         </TouchableOpacity>
                     )}
 
-                    {item.status !== 'completed' && (
+                    {item.status.toLowerCase() !== 'completed' && (
                         <>
                             <View style={{ flex: 0.1 }} />
                             <TouchableOpacity style={styles.completeBtn} onPress={() => handleComplete(item.id)}>
@@ -193,7 +216,7 @@ export default function TasksScreen() {
                     <View style={styles.headerTopRow}>
                         <View>
                             <Text style={styles.headerTitle}>Assigned Tasks</Text>
-                            <Text style={styles.headerSubtitle}>{tasks.filter(t => t.status !== 'completed').length} tasks pending</Text>
+                            <Text style={styles.headerSubtitle}>{tasks.filter(t => t.status.toLowerCase() !== 'completed').length} tasks pending</Text>
                         </View>
                         <TouchableOpacity 
                             style={[styles.toggleBtn, showCompleted && styles.toggleBtnActive]} 
@@ -228,10 +251,20 @@ export default function TasksScreen() {
             </View>
 
             <FlatList
-                data={showCompleted ? tasks : tasks.filter(t => t.status !== 'completed')}
+                data={showCompleted ? tasks : tasks.filter(t => t.status.toLowerCase() !== 'completed')}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#2563EB']} />
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="clipboard-outline" size={48} color="#CBD5E0" />
+                        <Text style={styles.emptyText}>No tasks found.</Text>
+                        <Text style={styles.emptySubtext}>Pull down to refresh and sync with server.</Text>
+                    </View>
+                }
             />
 
             <Modal
@@ -556,5 +589,21 @@ const styles = StyleSheet.create({
     saveBtnText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 50,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#718096',
+        marginTop: 16,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: '#A0AEC0',
+        marginTop: 8,
     },
 });

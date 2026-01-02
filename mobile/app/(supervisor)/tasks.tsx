@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { getTasks, Task, createTask } from '../../src/services/Database';
+import { locationService, Location as ManagedLocation } from '../../src/services/LocationService';
 import { Card, CardHeader, CardBody } from '../../src/components/UI/Card';
 import { Badge } from '../../src/components/UI/Badge';
 import { Button } from '../../src/components/UI/Button';
@@ -15,13 +16,14 @@ type Priority = 'High' | 'Medium' | 'Low';
 const statuses: TaskStatus[] = ['Open', 'In Progress', 'Completed', 'Delayed'];
 const priorities: Priority[] = ['High', 'Medium', 'Low'];
 
-const AREA_OPTIONS = ['Sector 7', 'Storage Area B', 'Main Hall', 'Pump House', 'Control Room'];
-const PLANT_OPTIONS = ['Main Refinery', 'East Wing', 'West Wing', 'North Plant'];
+
 
 export default function SupervisorTasksScreen() {
     const params = useLocalSearchParams();
     const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [locations, setLocations] = useState<ManagedLocation[]>([]);
+    const [isLoadingLocations, setIsLoadingLocations] = useState(true);
     const [isCreateModalVisible, setCreateModalVisible] = useState(false);
     const [isAreaPickerVisible, setAreaPickerVisible] = useState(false);
     const [isPlantPickerVisible, setPlantPickerVisible] = useState(false);
@@ -146,14 +148,28 @@ export default function SupervisorTasksScreen() {
         useCallback(() => {
             loadTasks();
             loadUsers();
+            loadLocations();
         }, [])
     );
+
+    const loadLocations = async () => {
+        try {
+            const locs = await locationService.getLocations();
+            setLocations(locs.filter(l => l.active));
+        } catch (e: any) {
+            console.error("Failed to load locations", e);
+            Alert.alert("Sync Error", "Failed to load locations: " + (e.message || "Unknown error"));
+        } finally {
+            setIsLoadingLocations(false);
+        }
+    };
 
     const loadUsers = async () => {
         try {
             // Import api dynamically or use the imported instance if accessible
             const { default: api } = await import('../../src/services/api');
-            const response = await api.get('/auth/users?role=Worker');
+            // Use UsersController which allows Supervisor access, unlike AuthController which is Admin/SafetyOfficer only
+            const response = await api.get('/users?role=Worker');
             if (response.data) {
                 setUsers(response.data);
             }
@@ -424,20 +440,23 @@ export default function SupervisorTasksScreen() {
                     <View style={styles.pickerModalContent}>
                         <Text style={styles.pickerModalTitle}>Select Area</Text>
                         <FlatList
-                            data={AREA_OPTIONS}
-                            keyExtractor={(item) => item}
+                            data={locations.filter(l => l.type !== 'Plant')}
+                            keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.pickerItem}
                                     onPress={() => {
-                                        setNewArea(item);
+                                        setNewArea(item.name);
                                         setAreaPickerVisible(false);
                                     }}
                                 >
-                                    <Text style={[styles.pickerItemText, newArea === item && styles.pickerItemTextActive]}>
-                                        {item}
-                                    </Text>
-                                    {newArea === item && <Ionicons name="checkmark" size={20} color="#2563EB" />}
+                                    <View>
+                                        <Text style={[styles.pickerItemText, newArea === item.name && styles.pickerItemTextActive]}>
+                                            {item.name}
+                                        </Text>
+                                        {item.parentLocationName && <Text style={{fontSize: 12, color: '#A0AEC0'}}>Sub of {item.parentLocationName}</Text>}
+                                    </View>
+                                    {newArea === item.name && <Ionicons name="checkmark" size={20} color="#2563EB" />}
                                 </TouchableOpacity>
                             )}
                         />
@@ -460,20 +479,20 @@ export default function SupervisorTasksScreen() {
                     <View style={styles.pickerModalContent}>
                         <Text style={styles.pickerModalTitle}>Select Plant</Text>
                         <FlatList
-                            data={PLANT_OPTIONS}
-                            keyExtractor={(item) => item}
+                            data={locations.filter(l => l.type === 'Plant')}
+                            keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.pickerItem}
                                     onPress={() => {
-                                        setNewPlant(item);
+                                        setNewPlant(item.name);
                                         setPlantPickerVisible(false);
                                     }}
                                 >
-                                    <Text style={[styles.pickerItemText, newPlant === item && styles.pickerItemTextActive]}>
-                                        {item}
+                                    <Text style={[styles.pickerItemText, newPlant === item.name && styles.pickerItemTextActive]}>
+                                        {item.name}
                                     </Text>
-                                    {newPlant === item && <Ionicons name="checkmark" size={20} color="#2563EB" />}
+                                    {newPlant === item.name && <Ionicons name="checkmark" size={20} color="#2563EB" />}
                                 </TouchableOpacity>
                             )}
                         />

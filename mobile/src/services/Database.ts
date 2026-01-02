@@ -14,6 +14,8 @@ export interface Incident {
     department?: string;
     area?: string;
     plant?: string;
+    ml_metadata?: string;
+    advisory?: string;
 }
 
 export interface Task {
@@ -101,12 +103,13 @@ export const initDatabase = async () => {
                 CREATE TABLE IF NOT EXISTS devices (
                     id TEXT PRIMARY KEY NOT NULL,
                     name TEXT,
-                    
+                    model TEXT,
                     station TEXT,
                     last_sync TEXT,
                     battery_level INTEGER,
-                    storage_used TEXT
-                    
+                    storage_used TEXT,
+                    model_version TEXT,
+                    model_updated TEXT
                 );
             `);
 
@@ -126,26 +129,31 @@ export const initDatabase = async () => {
                 'ALTER TABLE tasks ADD COLUMN server_id INTEGER', // New migration
                 'ALTER TABLE tasks ADD COLUMN delayed_at TEXT',
                 'ALTER TABLE tasks ADD COLUMN delay_history TEXT',
-                'CREATE TABLE IF NOT EXISTS devices (id TEXT PRIMARY KEY NOT NULL, name TEXT, model TEXT, station TEXT, last_sync TEXT, battery_level INTEGER, storage_used TEXT, model_version TEXT, model_updated TEXT)'
+                'ALTER TABLE devices ADD COLUMN model TEXT',
+                'ALTER TABLE devices ADD COLUMN model_version TEXT',
+                'ALTER TABLE devices ADD COLUMN model_updated TEXT'
             ];
 
             for (const sql of migrations) {
                 try {
                     await db.execAsync(sql);
-                } catch (e) {
-                    // Ignore duplicate column errors
+                } catch (e: any) {
+                    // Ignore duplicate column errors or other non-critical migration failures
+                    if (!e.message?.includes('duplicate column name')) {
+                        console.log(`[Database] Migration info (likely column exists): ${sql}`);
+                    }
                 }
             }
 
             console.log('Database initialized successfully');
 
-            // ... device seeding
-            // ... device seeding
-            const deviceCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM devices');
-            if (deviceCount?.count === 0) {
+            // Devices will be synced from server
+            const deviceRes = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM devices');
+            if (deviceRes && deviceRes.count === 0) {
+                console.log('[Database] Seeding default device...');
                 await db.runAsync(
                     'INSERT INTO devices (id, name, model, station, last_sync, battery_level, storage_used, model_version, model_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    ['HAZ-EYE-102', 'Mobile Terminal Alpha', 'Rugged Tab v4', 'Main Refinery - Gate 2', new Date().toISOString(), 85, '1.2 GB / 64 GB', '1.0.4', '2025-12-30']
+                    ['DEV-MOBILE-001', 'HazardEye Mobile', 'Standard Issue', 'Main Station', new Date().toISOString(), 100, '0%', '1.0.0', new Date().toISOString()]
                 );
             }
         } catch (error) {
@@ -265,11 +273,13 @@ export const getTasks = async (): Promise<Task[]> => {
 
 export const createTask = async (task: Task) => {
     try {
+        console.log('[Database] Creating task:', task.id);
         if (!db) await initDatabase();
         await db.runAsync(
             'INSERT INTO tasks (id, title, assignee, description, priority, status, due_date, comments, area, plant, precautions, incident_id, sync_status, delayed_at, delay_history) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [task.id || '', task.title || '', task.assignee || '', task.description || '', task.priority || 'medium', task.status || 'pending', task.due_date || '', task.comments || '[]', task.area || '', task.plant || '', task.precautions || '', task.incident_id || '', task.sync_status || 'pending', task.delayed_at || '', task.delay_history || '[]']
         );
+        console.log('[Database] Task created successfully:', task.id);
     } catch (error) {
         console.error('Error creating task:', error);
     }
@@ -355,15 +365,22 @@ export interface TaskComment {
     timestamp: string;
 }
 
+import * as SecureStore from 'expo-secure-store';
+
 export const addTaskComment = async (id: string, comment: string) => {
     try {
         if (!db) await initDatabase();
         const task = await db.getFirstAsync<Task>('SELECT comments FROM tasks WHERE id = ?', [id || '']);
         if (task) {
+            const userName = await SecureStore.getItemAsync('user') || 'Unknown';
+            const userRole = await SecureStore.getItemAsync('userRole') || 'worker';
+            
             const comments = JSON.parse(task.comments || '[]');
-            const newComment: TaskComment = {
+            const newComment: any = {
                 text: comment,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                userName: userName,
+                userRole: userRole
             };
             comments.push(newComment);
             await db.runAsync('UPDATE tasks SET comments = ?, sync_status = "pending" WHERE id = ?', [JSON.stringify(comments), id || '']);

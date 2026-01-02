@@ -50,6 +50,15 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             console.warn('API Context - 401 Unauthorized detected.');
             await SecureStore.deleteItemAsync('token');
+            // Force navigation to login
+            try {
+                // We use dynamic import or check if router is available, 
+                // but standard import should work if this file is not circular dependency
+                const { router } = require('expo-router');
+                router.replace('/login');
+            } catch (navError) {
+                console.error("Navigation error", navError);
+            }
         }
         return Promise.reject(error);
     }

@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card, CardHeader, CardBody } from '../../../src/components/UI/Card';
 import { Badge } from '../../../src/components/UI/Badge';
 import { Button } from '../../../src/components/UI/Button';
-import { AIRecommendationPanel, AIRecommendation } from '../../../src/components/AIRecommendationPanel';
 import { format } from 'date-fns';
 
 export default function IncidentDetailScreen() {
@@ -15,7 +14,7 @@ export default function IncidentDetailScreen() {
     const router = useRouter();
     const [incident, setIncident] = useState<Incident | null>(null);
     const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'analysis' | 'tasks'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tasks'>('overview');
     const [showImageModal, setShowImageModal] = useState(false);
 
     useFocusEffect(
@@ -140,7 +139,7 @@ export default function IncidentDetailScreen() {
 
                 {/* Tabs */}
                 <View style={styles.tabsContainer}>
-                    {(['overview', 'analysis', 'tasks'] as const).map(tab => (
+                    {(['overview', 'tasks'] as const).map(tab => (
                         <TouchableOpacity
                             key={tab}
                             style={[styles.tab, activeTab === tab && styles.activeTab]}
