@@ -2,6 +2,7 @@ import { fetchApi } from './api';
 import { Incident } from '../../supervisor/types';
 
 // Matching backend DTO
+// Matching backend DTO
 export interface IncidentDto {
     id: number;
     serverIncidentId: string;
@@ -24,6 +25,12 @@ export interface IncidentDto {
     closedAt?: string;
     comments: any[];
     correctiveActions: any[];
+    plant?: string;
+    area?: string;
+    plantLocationId?: number;
+    plantLocationName?: string;
+    areaLocationId?: number;
+    areaLocationName?: string;
 }
 
 export interface IncidentListResponse {
@@ -53,6 +60,16 @@ export const incidentService = {
             console.error(`Failed to fetch incident ${id}:`, error);
             return null;
         }
+    },
+
+    updateIncident: async (id: string, updates: Partial<Incident>): Promise<void> => {
+        // Backend expects PUT /api/incidents/{id} likely with full object or patch
+        // Given structure, we might need to send DTO.
+        // Assuming there's a PUT endpoint.
+        await fetchApi(`/incidents/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updates)
+        });
     }
 };
 
@@ -60,23 +77,26 @@ export const incidentService = {
 const mapDtoToIncident = (dto: IncidentDto): Incident => {
     return {
         id: dto.id.toString(),
-        imageUrl: dto.mediaUris.length > 0 ? getMediaUrl(dto.id, 0) : 'https://via.placeholder.com/150', // Placeholder or constructed URL
+        // Use the first media URI if available, otherwise placeholder. 
+        // Note: Backend might return relative paths or full URLs. 
+        // If it returns full URL (which it does now for uploads), use it directly.
+        imageUrl: dto.mediaUris && dto.mediaUris.length > 0 ? dto.mediaUris[0] : 'https://via.placeholder.com/150',
         dateTime: new Date(dto.capturedAt),
-        area: 'Unknown Area', // Backend doesn't provide Area yet (Device mapping needed)
-        plant: 'Refinery A', // Placeholder
-        department: 'General', // Placeholder
+        area: dto.areaLocationName || dto.area || '',
+        plant: dto.plantLocationName || dto.plant || '',
+        plantLocationId: dto.plantLocationId,
+        areaLocationId: dto.areaLocationId,
+        department: mapCategoryToDepartment(dto.category), // Map category to department
         severity: (dto.severity as any) || 'Low',
         status: (dto.status as any) || 'Open',
-        description: dto.note || dto.category || 'No description provided',
-
+        description: dto.note || dto.category || `Incident detected by ${dto.deviceId}`,
+        advisory: dto.advisory,
     };
 };
 
-const getMediaUrl = (_incidentId: number, _mediaIndex: number) => {
-    // This should ideally call the presigned URL endpoint.
-    // For now, we return a direct pointer if we can, or just empty for simplicity 
-    // since we need an async call to get the signed URL.
-    // A better approach is to have the Image component fetch the URL.
-    // For now, let's use a placeholder or handle it in the component.
-    return 'https://via.placeholder.com/150?text=No+Image';
+const mapCategoryToDepartment = (category: string): any => {
+    if (category?.includes('Fire') || category?.includes('Smoke')) return 'Fire & Safety';
+    if (category?.includes('Equip') || category?.includes('Machine')) return 'Mechanical';
+    if (category?.includes('Spill') || category?.includes('Leak')) return 'Environmental';
+    return 'General';
 };

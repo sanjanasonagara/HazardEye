@@ -8,7 +8,6 @@ import { Badge } from '../components/UI/Badge';
 import { Button } from '../components/UI/Button';
 import { Modal } from '../components/UI/Modal';
 import { TaskStatus, Priority } from '../types';
-const PLANT_OPTIONS = ['Refinery A', 'Refinery B', 'Chemical Plant C'];
 import { format } from 'date-fns';
 
 const statuses: TaskStatus[] = ['Open', 'In Progress', 'Completed', 'Delayed'];
@@ -336,8 +335,11 @@ interface CreateTaskModalProps {
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) => {
   const { state, addTask } = useApp();
   const { locations } = useLocations();
-  const employeeUsers = state.users.filter(u => u.role === 'employee');
-  const defaultAssignee = employeeUsers[0];
+  
+  // Requirement: Show all users except the current user
+  const assignableUsers = state.users.filter(u => u.id !== state.currentUser.id);
+  
+  const defaultAssignee = assignableUsers[0];
 
   const [formData, setFormData] = useState({
     description: '',
@@ -431,11 +433,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) =>
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="">Select plant...</option>
-              {PLANT_OPTIONS.map(plant => (
-                <option key={plant} value={plant}>
-                  {plant}
-                </option>
-              ))}
+              {locations
+                .filter(l => l.active && l.type === 'Plant')
+                .map(plant => (
+                  <option key={plant.id} value={plant.name}>
+                    {plant.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -491,10 +495,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose }) =>
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-            <option value="">Select employee...</option>
-            {employeeUsers.map(user => (
+            <option value="">Select user...</option>
+            {assignableUsers.map(user => (
               <option key={user.id} value={user.id}>
-                {user.name} ({user.department})
+                {user.name} ({user.role} - {user.department})
               </option>
             ))}
           </select>

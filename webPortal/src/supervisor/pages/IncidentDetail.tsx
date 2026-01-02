@@ -15,6 +15,7 @@ import { Modal } from '../components/UI/Modal';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { generateIncidentReport } from '../utils/reportGenerator';
 import { format } from 'date-fns';
+import { incidentService } from '../../shared/services/incidentService';
 
 export const IncidentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,9 +72,25 @@ export const IncidentDetail: React.FC = () => {
             Download
           </Button>
           {state.currentUser.role === 'supervisor' && (
-            <Button onClick={() => setShowTaskModal(true)}>
-              Create Task
-            </Button>
+            <>
+                {incident.status !== 'Resolved' && incident.status !== 'Closed' && (
+                     <Button 
+                        variant="secondary"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={async () => {
+                            if(confirm('Are you sure you want to close this incident?')) {
+                                await incidentService.updateIncident(incident.id, { status: 'Resolved' });
+                                // SignalR will update UI, or we can force refresh if needed
+                            }
+                        }}
+                     >
+                        Close Incident
+                     </Button>
+                )}
+                <Button onClick={() => setShowTaskModal(true)}>
+                  Create Task
+                </Button>
+            </>
           )}
         </div>
       </div>

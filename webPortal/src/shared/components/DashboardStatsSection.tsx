@@ -34,17 +34,17 @@ export const DashboardStatsSection: React.FC<DashboardStatsSectionProps> = ({ st
                     background = 'linear-gradient(135deg, #fcd34d 0%, #feedabff 50%, #fae284ff 100%)';
                     textColor = '#92400e'; // text-amber-800
                     subTextColor = '#b45309'; // text-amber-700
-                    iconColor = '#d97706'; // text-amber-600
+                    iconColor = '#fff'; // White for icon
                 } else if (index % 4 === 2) { // Red
                     background = 'linear-gradient(135deg, #f87171 0%, #f99898ff 50%, #faadadff 100%)';
-                    textColor = '#991b1b'; // text-red-800
-                    subTextColor = '#b91c1c'; // text-red-700
-                    iconColor = '#dc2626'; // text-red-600
+                    textColor = '#fff'; // White text
+                    subTextColor = 'rgba(255, 255, 255, 0.9)'; 
+                    iconColor = '#fff'; // White icon
                 } else if (index % 4 === 3) { // Teal
                     background = 'linear-gradient(135deg, #14b8a6 0%, #3dcdaeff 50%, #f0fdfa 100%)';
-                    textColor = '#115e59'; // text-teal-800
-                    subTextColor = '#134e4a'; // text-teal-900 (darker)
-                    iconColor = '#0d9488'; // text-teal-600
+                    textColor = '#fff'; // White text
+                    subTextColor = 'rgba(255, 255, 255, 0.9)';
+                    iconColor = '#fff'; // White icon
                 }
 
                 return (

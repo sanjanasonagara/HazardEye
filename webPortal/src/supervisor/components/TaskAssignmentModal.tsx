@@ -18,17 +18,18 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
   const { state, addTask } = useApp();
   const { locations } = useLocations();
 
+  // Requirement: Show all users except the current user
+  const assignableUsers = state.users.filter(u => u.id !== state.currentUser.id);
+
   const [formData, setFormData] = useState({
     description: `Address ${incident.department} issue: ${incident.description}`,
     area: incident.area,
     plant: incident.plant,
     dueDate: format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     priority: 'Medium' as Priority,
-    precautions: incident.aiRecommendation?.preventiveSteps.join('; ') || 'Follow standard safety protocols.',
-    assignedTo: state.users.find(u => u.role === 'employee')?.id || '',
+    precautions: incident.advisory || 'Follow standard safety protocols.',
+    assignedTo: assignableUsers[0]?.id || '',
   });
-
-  const employeeUsers = state.users.filter(u => u.role === 'employee');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,10 +156,10 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-            <option value="">Select employee...</option>
-            {employeeUsers.map(user => (
+            <option value="">Select user...</option>
+            {assignableUsers.map(user => (
               <option key={user.id} value={user.id}>
-                {user.name} ({user.department})
+                {user.name} ({user.role} - {user.department})
               </option>
             ))}
           </select>

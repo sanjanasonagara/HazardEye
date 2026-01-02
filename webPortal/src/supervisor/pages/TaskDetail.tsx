@@ -31,6 +31,22 @@ export const TaskDetail: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'resolution' | 'incident'>('overview');
 
+  const [editForm, setEditForm] = useState<{
+    description: string;
+    area: string;
+    plant: string;
+    dueDate: string;
+    priority: Priority;
+    precautions: string;
+  }>({
+    description: '',
+    area: '',
+    plant: '',
+    dueDate: format(new Date(), 'yyyy-MM-dd'),
+    priority: 'Medium',
+    precautions: '',
+  });
+
   const task = state.tasks.find(t => t.id === id);
   const linkedIncident = task?.incidentId ? state.incidents.find(i => i.id === task.incidentId) : null;
 
@@ -85,27 +101,12 @@ export const TaskDetail: React.FC = () => {
       userId: state.currentUser.id,
       userName: state.currentUser.name,
       userRole: state.currentUser.role,
-      content: comment,
+      text: comment,
     });
     setComment('');
     setShowCommentModal(false);
   };
 
-  const [editForm, setEditForm] = useState<{
-    description: string;
-    area: string;
-    plant: string;
-    dueDate: string;
-    priority: Priority;
-    precautions: string;
-  }>({
-    description: task.description,
-    area: task.area,
-    plant: task.plant,
-    dueDate: format(task.dueDate, 'yyyy-MM-dd'),
-    priority: task.priority,
-    precautions: task.precautions,
-  });
 
   const handleOpenEdit = () => {
     setEditForm({
@@ -237,19 +238,53 @@ export const TaskDetail: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                {/* Task Description */}
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-lg font-semibold text-gray-900">Description</h2>
-                  </CardHeader>
-                  <CardBody>
-                    <p className="text-gray-700 leading-relaxed">{task.description}</p>
-                  </CardBody>
-                </Card>
+                {activeTab === 'overview' && (
+                    <div className="space-y-6">
+                        {linkedIncident && (
+                            <Card className="bg-primary-50 border-primary-100 overflow-hidden">
+                                <CardBody className="p-0">
+                                    <div className="flex">
+                                        <div className="bg-primary-500 w-2 shrink-0" />
+                                        <div className="p-4 flex items-start gap-4 flex-1">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <AlertCircle className="w-5 h-5 text-primary-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex gap-2 mb-1 items-center">
+                                                    <h3 className="text-sm font-bold text-primary-900 uppercase tracking-wider">Linked Incident</h3>
+                                                    <Badge variant={linkedIncident.severity} className="text-[10px] py-0">{linkedIncident.severity}</Badge>
+                                                </div>
+                                                <p className="text-sm text-primary-800 line-clamp-1 font-medium">{linkedIncident.description}</p>
+                                                <div className="flex gap-3 mt-2">
+                                                    <span className="text-[10px] text-primary-600 font-bold uppercase flex items-center gap-1">
+                                                        <MapPin className="w-3 h-3" /> {linkedIncident.plant} / {linkedIncident.area}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <Button 
+                                                variant="secondary" 
+                                                size="sm" 
+                                                className="shrink-0 bg-white hover:bg-primary-100 text-primary-700 border-primary-200"
+                                                onClick={() => setActiveTab('incident')}
+                                            >
+                                                View Details
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        )}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 space-y-6">
+                                {/* Task Description */}
+                                <Card>
+                                    <CardHeader>
+                                        <h2 className="text-lg font-semibold text-gray-900">Description</h2>
+                                    </CardHeader>
+                                    <CardBody>
+                                        <p className="text-gray-700 leading-relaxed">{task.description}</p>
+                                    </CardBody>
+                                </Card>
 
                 {/* Precautions */}
                 <Card>
@@ -280,7 +315,7 @@ export const TaskDetail: React.FC = () => {
                     ) : (
                       <div className="space-y-4">
                         {task.comments
-                          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+                          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                           .map(comment => (
                             <div
                               key={comment.id}
@@ -303,7 +338,7 @@ export const TaskDetail: React.FC = () => {
                                     )}
                                 </span>
                               </div>
-                              <p className="text-gray-700 text-sm">{comment.content}</p>
+                              <p className="text-gray-700 text-sm">{comment.text}</p>
                             </div>
                           ))}
                       </div>
@@ -336,7 +371,7 @@ export const TaskDetail: React.FC = () => {
                     </Card>
                   );
 
-                  history.sort((a, b) => b.date.getTime() - a.date.getTime());
+                  history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                   return (
                     <Card className="border-l-4 border-l-warning-500">
@@ -449,32 +484,94 @@ export const TaskDetail: React.FC = () => {
         )}
 
         {activeTab === 'incident' && (
-          <div>
+          <div className="space-y-6">
             {linkedIncident ? (
-              <Card className="hover:shadow-md transition-shadow">
-                <CardBody>
-                  <div className="flex items-start gap-4">
-                    <div className="w-24 h-24 flex-shrink-0">
-                      <img
-                        src={linkedIncident.imageUrl}
-                        alt="Incident"
-                        className="w-full h-full object-cover rounded-md"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{linkedIncident.department} Issue</h3>
-                      <p className="text-gray-600 mb-2 line-clamp-2">{linkedIncident.description}</p>
-                      <div className="flex gap-2 mb-3">
-                        <Badge variant={linkedIncident.severity}>{linkedIncident.severity}</Badge>
-                        <Badge variant={linkedIncident.status}>{linkedIncident.status}</Badge>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-gray-900">Incident Information</h2>
+                        <div className="flex gap-2">
+                          <Badge variant={linkedIncident.severity}>{linkedIncident.severity}</Badge>
+                          <Badge variant={linkedIncident.status}>{linkedIncident.status}</Badge>
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => navigate(`/supervisor/incidents/${linkedIncident.id}`)}>
-                        View Full Incident
-                      </Button>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
+                    </CardHeader>
+                    <CardBody className="space-y-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-32 h-32 flex-shrink-0">
+                          <img
+                            src={linkedIncident.imageUrl}
+                            alt="Incident"
+                            className="w-full h-full object-cover rounded-md border border-gray-200"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Description</h3>
+                            <p className="text-gray-700 leading-relaxed">{linkedIncident.description}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                        <div>
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-tight mb-1">Plant</h3>
+                          <p className="text-sm font-semibold text-gray-900">{linkedIncident.plant || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-tight mb-1">Area</h3>
+                          <p className="text-sm font-semibold text-gray-900">{linkedIncident.area || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+
+                  {linkedIncident.advisory && (
+                    <Card className="border-l-4 border-l-blue-500 bg-blue-50/30">
+                      <CardHeader>
+                        <h2 className="text-sm font-bold text-blue-900 uppercase tracking-wider">Safety Advisory</h2>
+                      </CardHeader>
+                      <CardBody>
+                        <p className="text-sm text-blue-800 leading-relaxed">
+                          {linkedIncident.advisory}
+                        </p>
+                      </CardBody>
+                    </Card>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Metadata</h2>
+                    </CardHeader>
+                    <CardBody className="space-y-4">
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Department</p>
+                        <p className="text-sm font-semibold text-gray-900">{linkedIncident.department}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase font-medium">Capture Time</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {format(new Date(linkedIncident.dateTime), 'MMM d, yyyy h:mm a')}
+                        </p>
+                      </div>
+                      <div className="pt-4 border-t border-gray-100">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => navigate(`/supervisor/incidents/${linkedIncident.id}`)}
+                        >
+                          View Full Incident Detail
+                        </Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </div>
+              </div>
             ) : (
               <Card>
                 <CardBody className="text-center py-12 text-gray-500">

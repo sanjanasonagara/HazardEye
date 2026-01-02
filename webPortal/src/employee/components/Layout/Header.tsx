@@ -22,8 +22,13 @@ export const Header: React.FC = () => {
     const navigate = useNavigate();
 
     React.useEffect(() => {
-        fetchApi<{ isAdmin: boolean; isSupervisor: boolean }>('/users/me')
-            .then(data => setRealRole(data))
+        fetchApi<any>('/users/me')
+            .then(data => {
+                const role = data.role?.toLowerCase();
+                const isAdmin = role === 'admin' || role === 'systemadmin';
+                const isSupervisor = role === 'supervisor' || role === 'safetyofficer';
+                setRealRole({ isAdmin, isSupervisor });
+            })
             .catch(console.error);
     }, []);
 

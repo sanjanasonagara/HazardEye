@@ -1,39 +1,39 @@
+/* Base imports must come first */
+@import "./admin/index.css";
+@import "./supervisor/index.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Scoped styles for Admin Portal to avoid total collision */
 .admin-portal {
-    --color-primary: #3b82f6;
-    --color-primary-dark: #1e40af;
-    --color-primary-light: #eff6ff;
-    --color-hazard: #f97316;
-    --color-hazard-dark: #c2410c;
-    --color-hazard-light: #fff7ed;
-    --color-success: #22c55e;
-    --color-success-bg: #f0fdf4;
-    --color-danger: #ef4444;
-    --color-danger-bg: #fef2f2;
-    --color-warning: #eab308;
-    --color-warning-bg: #fefce8;
-    --color-text-main: #1e293b;
-    --color-text-muted: #64748b;
-    --color-text-light: #94a3b8;
-    --color-bg-body: #f8fafc;
-    --color-bg-surface: #ffffff;
-    --color-border: #e2e8f0;
-    --header-height: 64px;
+  --color-primary: #3b82f6;
+  --color-primary-dark: #1e40af;
+  --color-primary-light: #eff6ff;
+  --color-hazard: #f97316;
+  --color-hazard-dark: #c2410c;
+  --color-hazard-light: #fff7ed;
+  --color-success: #22c55e;
+  --color-success-bg: #f0fdf4;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-warning: #eab308;
+  --color-warning-bg: #fefce8;
+  --color-text-main: #1e293b;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+  --color-bg-body: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --header-height: 64px;
 }
 
 /* Base styles for the entire app */
 @layer base {
-    body {
-        @apply bg-gray-50 text-gray-900 antialiased;
-        margin: 0;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
 }
-
-/* Import Admin specifics - we might need to scope these better later */
-@import './admin/index.css';
-@import './supervisor/index.css';

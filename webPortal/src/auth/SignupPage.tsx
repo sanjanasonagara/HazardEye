@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../shared/services/api';
 import { Shield, Mail, Lock, User, Phone, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
@@ -69,7 +70,7 @@ export const SignupPage: React.FC = () => {
             // Map role - Default to Employee/Viewer since Role selection UI is removed
             const roleToSend = 'Viewer';
 
-            const response = await fetch('http://localhost:5200/api/auth/register', {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

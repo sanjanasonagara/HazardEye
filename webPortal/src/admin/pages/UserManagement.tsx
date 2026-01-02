@@ -1,15 +1,6 @@
-
 import { useState, useMemo, useEffect } from 'react';
-import {
-    Search,
-    CheckCircle2,
-    XCircle,
-    History,
-    AlertCircle,
-    Shield,
-    Briefcase,
-    X
-} from 'lucide-react';
+import { Trash2, UserPlus, Filter, Download, Search, CheckCircle, Shield, MoreVertical, CheckCircle2, XCircle, History, AlertCircle, Briefcase, X } from 'lucide-react';
+import { API_BASE_URL } from '../../shared/services/api';
 import './UserManagement.css';
 
 // --- Interfaces ---
@@ -51,7 +42,7 @@ interface AuditEntry {
 // --- API Helpers ---
 // Ideally these move to a service file
 
-const API_BASE = 'http://localhost:5200/api';
+// API_BASE removed in favor of import
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -67,6 +58,7 @@ const UserManagement = () => {
     // State
     const [users, setUsers] = useState<User[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [roles, setRoles] = useState<any[]>([]); // Dynamic roles
     const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -78,6 +70,20 @@ const UserManagement = () => {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    // Create User State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        role: 'Viewer',
+        employeeId: '',
+        phone: '',
+        company: 'Operations' // Default
+    });
+
+    // Modal State
     const [modalForm, setModalForm] = useState({
         isAdmin: false,
         isSupervisor: false,
@@ -89,14 +95,32 @@ const UserManagement = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersRes, deptsRes] = await Promise.all([
-                fetch(`${API_BASE}/users`, { headers: getAuthHeaders() }),
-                fetch(`${API_BASE}/departments`, { headers: getAuthHeaders() })
+            const [usersRes, deptsRes, rolesRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/users`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_URL}/departments`, { headers: getAuthHeaders() }),
+                fetch(`${API_BASE_URL}/roles`, { headers: getAuthHeaders() })
             ]);
 
             if (usersRes.ok) {
                 const usersData = await usersRes.json();
-                setUsers(usersData);
+                // Map backend DTO to frontend User interface
+                const mappedUsers = usersData.map((u: any) => ({
+                    id: u.id,
+                    name: `${u.firstName} ${u.lastName}`,
+                    email: u.email,
+                    employeeId: u.employeeId || '',
+                    isActive: u.isActive,
+                    lastLoginAt: u.lastLoginAt,
+                    createdAt: u.createdAt,
+                    isAdmin: u.role === 'Admin',
+                    isSupervisor: u.role === 'Supervisor' || u.role === 'SafetyOfficer',
+                    isEmployee: u.role === 'Worker' || u.role === 'Viewer',
+                    supervisorDepartments: u.supervisorDepartments || [],
+                    supervisorDepartmentIds: u.supervisorDepartmentIds || [],
+                    phone: u.phone,
+                    company: u.company
+                }));
+                setUsers(mappedUsers);
             } else {
                 console.error("Failed to fetch users", usersRes.status);
                 if (usersRes.status === 401 || usersRes.status === 403) {
@@ -111,8 +135,13 @@ const UserManagement = () => {
                 setDepartments(deptsData);
             }
 
+            if (rolesRes.ok) {
+                const rolesData = await rolesRes.json();
+                setRoles(rolesData);
+            }
+
             // Fetch Audit Logs (Optional/Separate)
-            const auditRes = await fetch(`${API_BASE}/audit`, { headers: getAuthHeaders() });
+            const auditRes = await fetch(`${API_BASE_URL}/audit`, { headers: getAuthHeaders() });
             if (auditRes.ok) {
                 const auditData = await auditRes.json();
                 setAuditLog(auditData);
@@ -132,6 +161,40 @@ const UserManagement = () => {
 
     // --- Actions ---
 
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${API_BASE_URL}/users`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(createForm)
+            });
+
+            if (!res.ok) {
+                const json = await res.json();
+                alert(json.message || "Failed to create user.");
+                return;
+            }
+
+            alert("User created successfully!");
+            setIsCreateModalOpen(false);
+            setCreateForm({
+                firstName: '',
+                lastName: '',
+                email: '',
+                password: '',
+                role: 'Viewer',
+                employeeId: '',
+                phone: '',
+                company: 'Operations'
+            });
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert("An error occurred.");
+        }
+    };
+
     const handleOpenPermissions = (user: User) => {
         setSelectedUser(user);
 
@@ -146,11 +209,15 @@ const UserManagement = () => {
         setIsModalOpen(true);
     };
 
+    // ... handleSavePermissions, handleToggleStatus ... (omitted for brevity in replacement, but I must be careful not to delete them)
+    // Actually, sticking to smaller replacements is safer. 
+    // I will return the original logic for handleSave + permissions but insert handleCreate.
+
     const handleSavePermissions = async () => {
         if (!selectedUser) return;
 
         try {
-            const res = await fetch(`${API_BASE}/users/${selectedUser.id}/permissions`, {
+            const response = await fetch(`${API_BASE_URL}/users/${selectedUser.id}/permissions`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
@@ -160,10 +227,10 @@ const UserManagement = () => {
                 })
             });
 
-            if (!res.ok) {
-                let errMsg = `Error ${res.status}: ${res.statusText}`;
+            if (!response.ok) {
+                let errMsg = `Error ${response.status}: ${response.statusText}`;
                 try {
-                    const text = await res.text();
+                    const text = await response.text();
                     if (text) {
                         const json = JSON.parse(text);
                         errMsg = json.message || errMsg;
@@ -171,7 +238,7 @@ const UserManagement = () => {
                     }
                 } catch (e) { }
 
-                if (res.status === 401 || res.status === 403) {
+                if (response.status === 401 || response.status === 403) {
                     errMsg = "Access Denied. Please log out and log back in to refresh your permissions.";
                 }
 
@@ -193,7 +260,7 @@ const UserManagement = () => {
         if (!confirm(`Are you sure you want to ${user.isActive ? 'disable' : 'enable'} ${user.name}?`)) return;
 
         try {
-            const res = await fetch(`${API_BASE}/users/${user.id}/status`, {
+            const response = await fetch(`${API_BASE_URL}/users/${user.id}/role`, {
                 method: 'PATCH',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
@@ -201,10 +268,10 @@ const UserManagement = () => {
                 })
             });
 
-            if (!res.ok) {
-                let errMsg = `Error ${res.status}: ${res.statusText}`;
+            if (!response.ok) {
+                let errMsg = `Error ${response.status}: ${response.statusText}`;
                 try {
-                    const text = await res.text();
+                    const text = await response.text();
                     if (text) {
                         const json = JSON.parse(text);
                         errMsg = json.message || errMsg;
@@ -212,7 +279,7 @@ const UserManagement = () => {
                     }
                 } catch (e) { }
 
-                if (res.status === 401 || res.status === 403) {
+                if (response.status === 401 || response.status === 403) {
                     errMsg = "Access Denied. Please log out and log back in to refresh your permissions.";
                 }
 
@@ -221,6 +288,28 @@ const UserManagement = () => {
             }
 
             await fetchData();
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred.');
+        }
+    };
+
+    const handleDeleteUser = async (user: User) => {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete ${user.name}? This cannot be undone.`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                alert(`Failed to delete user. Status: ${response.status}`);
+                return;
+            }
+
+            alert("User deleted successfully.");
+            fetchData();
         } catch (err) {
             console.error(err);
             alert('An unexpected error occurred.');
@@ -257,9 +346,15 @@ const UserManagement = () => {
                     <h1>User Management & Governance</h1>
                     <p>Manage system authority, responsibilities, and access controls</p>
                 </div>
-                <button className="btn-primary" onClick={fetchData} style={{ padding: '8px 16px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Refresh Data
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)} style={{ padding: '8px 16px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserPlus size={18} />
+                        Add User
+                    </button>
+                    <button className="btn-secondary" onClick={fetchData} style={{ padding: '8px 16px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer' }}>
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             {/* --- Filters --- */}
@@ -289,6 +384,65 @@ const UserManagement = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Create User Modal */}
+            {isCreateModalOpen && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Create New User</h2>
+                            <button onClick={() => setIsCreateModalOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleCreateUser} style={{ display: 'grid', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>First Name</label>
+                                    <input required type="text" value={createForm.firstName} onChange={e => setCreateForm({...createForm, firstName: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Last Name</label>
+                                    <input required type="text" value={createForm.lastName} onChange={e => setCreateForm({...createForm, lastName: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Email</label>
+                                <input required type="email" value={createForm.email} onChange={e => setCreateForm({...createForm, email: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Password</label>
+                                <input required type="password" value={createForm.password} onChange={e => setCreateForm({...createForm, password: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Role</label>
+                                    <select value={createForm.role} onChange={e => setCreateForm({...createForm, role: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                                        {roles.length > 0 ? roles.map(r => (
+                                            <option key={r.id} value={r.name}>{r.name}</option>
+                                        )) : (
+                                            <>
+                                                <option value="Worker">Worker</option>
+                                                <option value="Supervisor">Supervisor</option>
+                                                <option value="Admin">Admin</option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Department</label>
+                                    <select value={createForm.company} onChange={e => setCreateForm({...createForm, company: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                                        {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '4px' }}>Employee ID</label>
+                                <input type="text" value={createForm.employeeId} onChange={e => setCreateForm({...createForm, employeeId: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                            </div>
+                            <button type="submit" style={{ marginTop: '16px', padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 600, cursor: 'pointer' }}>Create User</button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
@@ -400,6 +554,14 @@ const UserManagement = () => {
                                                     title={user.isActive ? "Disable Access" : "Enable Access"}
                                                 >
                                                     {user.isActive ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user)}
+                                                    className="action-btn"
+                                                    style={{ marginLeft: '8px', color: '#ef4444', backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}
+                                                    title="Permanently Delete User"
+                                                >
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </td>

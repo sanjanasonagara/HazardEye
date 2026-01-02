@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../shared/services/api';
 import { Shield, Mail, Lock, Eye, EyeOff, ArrowRight, Github } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -21,7 +22,7 @@ export const LoginPage: React.FC = () => {
         // Mock Login removed to ensure real backend authentication is always used.
 
         try {
-            const response = await fetch('http://localhost:5200/api/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

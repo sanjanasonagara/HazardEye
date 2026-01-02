@@ -4,7 +4,7 @@ export type Severity = 'High' | 'Medium' | 'Low';
 
 export type Priority = 'High' | 'Medium' | 'Low';
 
-export type IncidentStatus = 'Open' | 'In Progress' | 'Resolved';
+export type IncidentStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
 
 export type TaskStatus = 'Open' | 'In Progress' | 'Completed' | 'Delayed';
 
@@ -32,11 +32,14 @@ export interface Incident {
   dateTime: Date;
   area: string;
   plant: string;
+  plantLocationId?: number;
+  areaLocationId?: number;
   unit?: string;
   department: Department;
   severity: Severity;
   status: IncidentStatus;
   description: string;
+  advisory?: string;
 }
 
 
@@ -52,6 +55,8 @@ export interface Task {
   description: string;
   area: string;
   plant: string;
+  plantLocationId?: number;
+  areaLocationId?: number;
   dueDate: Date;
   priority: Priority;
   status: TaskStatus;
@@ -73,7 +78,7 @@ export interface TaskComment {
   userId: string;
   userName: string;
   userRole: UserRole;
-  content: string;
+  text: string;
   timestamp: Date;
 }
 

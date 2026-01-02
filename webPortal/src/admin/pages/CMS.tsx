@@ -11,12 +11,14 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/UI/Button';
 import { LocationManager } from '../components/CMS/LocationManager';
+import { DepartmentManager } from '../components/CMS/DepartmentManager';
+import { RoleManager } from '../components/CMS/RoleManager';
 
 const contentTypes = ['All', 'Safety Guideline', 'SOP', 'Announcement', 'Policy'];
 
 const CMS = () => {
     // We append 'Locations' to the filter tabs
-    const TABS = [...contentTypes, 'Locations'];
+    const TABS = [...contentTypes, 'Locations', 'Departments', 'Roles'];
 
     const [cmsData, setCmsData] = useState<any[]>([]);
     const [filter, setFilter] = useState('All');
@@ -183,7 +185,7 @@ const CMS = () => {
                     ))}
                 </div>
 
-                {filter !== 'Locations' && (
+                {filter !== 'Locations' && filter !== 'Departments' && filter !== 'Roles' && (
                     <Button variant="primary" onClick={handleOpenCreate}>
                         <Plus size={16} style={{ marginRight: '0.5rem' }} />
                         Create New
@@ -194,6 +196,10 @@ const CMS = () => {
             {/* LOCATION MANAGER VIEW */}
             {filter === 'Locations' ? (
                 <LocationManager />
+            ) : filter === 'Departments' ? (
+                <DepartmentManager />
+            ) : filter === 'Roles' ? (
+                <RoleManager />
             ) : (
                 /* CONTENT MANAGER VIEW */
                 <>
@@ -270,7 +276,7 @@ const CMS = () => {
             )}
 
             {/* Create/Edit Modal (Content) */}
-            {isCreating && filter !== 'Locations' && (
+            {isCreating && filter !== 'Locations' && filter !== 'Departments' && filter !== 'Roles' && (
                 <div style={styles.overlay}>
                     <div style={styles.modal}>
                         <div style={styles.modalHeader}>
