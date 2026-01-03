@@ -1,6 +1,13 @@
 import React from 'react';
 
-export const Card = ({ children, className = '', style = {}, onClick }) => {
+interface CardProps {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+    onClick?: () => void;
+}
+
+export const Card = ({ children, className = '', style = {}, onClick }: CardProps) => {
     const cardStyle = {
         backgroundColor: 'white',
         borderRadius: '0.75rem',
@@ -23,7 +30,13 @@ export const Card = ({ children, className = '', style = {}, onClick }) => {
     );
 };
 
-export const CardHeader = ({ children, className = '', style = {} }) => {
+interface CardHeaderProps {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+}
+
+export const CardHeader = ({ children, className = '', style = {} }: CardHeaderProps) => {
     const headerStyle = {
         padding: '1.25rem 1.5rem',
         borderBottom: '1px solid #f1f5f9',
@@ -38,7 +51,13 @@ export const CardHeader = ({ children, className = '', style = {} }) => {
     );
 };
 
-export const CardBody = ({ children, className = '', style = {} }) => {
+interface CardBodyProps {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+}
+
+export const CardBody = ({ children, className = '', style = {} }: CardBodyProps) => {
     const bodyStyle = {
         padding: '1.5rem',
         ...style

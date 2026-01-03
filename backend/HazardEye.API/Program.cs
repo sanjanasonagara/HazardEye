@@ -116,7 +116,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // Allow any origin in dev
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:8081")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -149,10 +149,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles(); // Default for wwwroot
+// Ensure the uploads directory exists
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads")),
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads",
     OnPrepareResponse = ctx =>
     {

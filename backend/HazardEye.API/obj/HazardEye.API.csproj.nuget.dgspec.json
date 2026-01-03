@@ -1,25 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "/Users/ankitkuniyal/Documents/Coding/Hazard-Eye/backend/HazardEye.API/HazardEye.API.csproj": {}
+    "C:\\Users\\sanja\\OneDrive\\Desktop\\Coding\\Web Dev\\Projects\\Hazard-Eye\\backend\\hazardeye.api\\HazardEye.API.csproj": {}
   },
   "projects": {
-    "/Users/ankitkuniyal/Documents/Coding/Hazard-Eye/backend/HazardEye.API/HazardEye.API.csproj": {
+    "C:\\Users\\sanja\\OneDrive\\Desktop\\Coding\\Web Dev\\Projects\\Hazard-Eye\\backend\\hazardeye.api\\HazardEye.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/ankitkuniyal/Documents/Coding/Hazard-Eye/backend/HazardEye.API/HazardEye.API.csproj",
+        "projectUniqueName": "C:\\Users\\sanja\\OneDrive\\Desktop\\Coding\\Web Dev\\Projects\\Hazard-Eye\\backend\\hazardeye.api\\HazardEye.API.csproj",
         "projectName": "HazardEye.API",
-        "projectPath": "/Users/ankitkuniyal/Documents/Coding/Hazard-Eye/backend/HazardEye.API/HazardEye.API.csproj",
-        "packagesPath": "/Users/ankitkuniyal/.nuget/packages/",
-        "outputPath": "/Users/ankitkuniyal/Documents/Coding/Hazard-Eye/backend/HazardEye.API/obj/",
+        "projectPath": "C:\\Users\\sanja\\OneDrive\\Desktop\\Coding\\Web Dev\\Projects\\Hazard-Eye\\backend\\hazardeye.api\\HazardEye.API.csproj",
+        "packagesPath": "C:\\Users\\sanja\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\sanja\\OneDrive\\Desktop\\Coding\\Web Dev\\Projects\\Hazard-Eye\\backend\\hazardeye.api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/ankitkuniyal/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\sanja\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -106,7 +108,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

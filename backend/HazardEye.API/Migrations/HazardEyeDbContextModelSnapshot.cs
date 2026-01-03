@@ -605,8 +605,14 @@ namespace HazardEye.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Area")
+                        .HasColumnType("text");
+
                     b.Property<int>("AssignedToUserId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -623,6 +629,9 @@ namespace HazardEye.API.Migrations
 
                     b.Property<int>("IncidentId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Plant")
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()

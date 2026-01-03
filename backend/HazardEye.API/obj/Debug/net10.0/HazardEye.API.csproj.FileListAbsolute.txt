@@ -201,3 +201,4 @@ C:\Users\sanja\OneDrive\Desktop\Coding\Web Dev\Projects\Hazard-Eye\backend\hazar
 C:\Users\sanja\OneDrive\Desktop\Coding\Web Dev\Projects\Hazard-Eye\backend\hazardeye.api\obj\Debug\net10.0\HazardEye.API.pdb
 C:\Users\sanja\OneDrive\Desktop\Coding\Web Dev\Projects\Hazard-Eye\backend\hazardeye.api\obj\Debug\net10.0\HazardEye.API.genruntimeconfig.cache
 C:\Users\sanja\OneDrive\Desktop\Coding\Web Dev\Projects\Hazard-Eye\backend\hazardeye.api\obj\Debug\net10.0\ref\HazardEye.API.dll
+C:\Users\sanja\OneDrive\Desktop\Coding\Web Dev\Projects\Hazard-Eye\backend\hazardeye.api\bin\Debug\net10.0\HazardEye.API.staticwebassets.runtime.json

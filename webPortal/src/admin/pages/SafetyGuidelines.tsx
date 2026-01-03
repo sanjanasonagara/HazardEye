@@ -5,7 +5,7 @@ import { Button } from '../components/UI/Button';
 import { format } from 'date-fns';
 const mockSafetyResources: any[] = [];
 
-const IconMap = {
+const IconMap: { [key: string]: React.ReactNode } = {
     ShieldCheck: <ShieldCheck size={20} color="#2563eb" />, // blue-600
     Settings: <Settings size={20} color="#4b5563" />, // gray-600
     Power: <Power size={20} color="#ea580c" />, // orange-600
@@ -25,12 +25,12 @@ const SafetyGuidelines = () => {
         });
     }, [activeTab, searchQuery]);
 
-    const handleDownload = (id) => {
+    const handleDownload = (id: string) => {
         alert(`Downloading resource: ${id}`);
     };
 
     // --- Inline Styles for "Pixel Perfect" Matching ---
-    const styles = {
+    const styles: any = {
         container: {
             maxWidth: '1152px', // max-w-6xl
             margin: '0 auto',
@@ -98,13 +98,13 @@ const SafetyGuidelines = () => {
             width: 'fit-content',
             border: '1px solid #e5e7eb',
         },
-        tabButton: (isActive) => ({
+        tabButton: (isActive: boolean): React.CSSProperties => ({
             padding: '0.5rem 1.5rem',
             borderRadius: '0.5rem',
             fontSize: '0.875rem',
             fontWeight: '600',
             transition: 'all 0.2s',
-            border: 'none',
+
             cursor: 'pointer',
             backgroundColor: isActive ? 'white' : 'transparent',
             color: isActive ? '#0369a1' : '#6b7280', // primary-700 : gray-500
@@ -116,7 +116,7 @@ const SafetyGuidelines = () => {
             flexDirection: 'column',
             gap: '2rem',
         },
-        cardTopBorder: (color) => ({
+        cardTopBorder: (color: string): React.CSSProperties => ({
             borderTop: `4px solid ${color}`,
         }),
         cardHeaderContent: {
@@ -141,8 +141,8 @@ const SafetyGuidelines = () => {
             color: '#1f2937', // gray-800
             margin: 0,
         },
-        badge: (type) => ({
-            fontSize: '10px',
+        badge: (type: string): React.CSSProperties => ({
+            fontSize: '0.625rem', // 10px
             fontWeight: '700',
             padding: '0.125rem 0.5rem',
             borderRadius: '9999px',
@@ -151,6 +151,7 @@ const SafetyGuidelines = () => {
             backgroundColor: type === 'SOP' ? '#ffedd5' : '#dbeafe', // orange-100 : blue-100
             color: type === 'SOP' ? '#c2410c' : '#1d4ed8', // orange-700 : blue-700
             marginLeft: '0.5rem',
+            display: 'inline-block',
         }),
         dateText: {
             fontSize: '0.75rem', // xs
@@ -269,7 +270,7 @@ const SafetyGuidelines = () => {
                                     </p>
 
                                     <div style={styles.sectionsGrid}>
-                                        {resource.sections.map((section, idx) => (
+                                        {resource.sections.map((section: any, idx: number) => (
                                             <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f3f4f6' }}>
                                                     {section.icon && IconMap[section.icon] ? (
@@ -280,7 +281,7 @@ const SafetyGuidelines = () => {
                                                     <h3 style={styles.sectionTitle}>{section.title}</h3>
                                                 </div>
                                                 <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0, listStyle: 'none' }}>
-                                                    {section.items.map((item, itemIdx) => (
+                                                    {section.items.map((item: any, itemIdx: number) => (
                                                         <li key={itemIdx} style={styles.listItem}>
                                                             <CheckCircle2 size={18} color="#22c55e" style={{ marginTop: '0.125rem', flexShrink: 0 }} />
                                                             <span style={{ color: '#374151', lineHeight: '1.375' }}>{item}</span>
@@ -303,7 +304,7 @@ const SafetyGuidelines = () => {
                         <p style={{ color: '#6b7280', marginTop: '0.25rem' }}>Try adjusting your search or filters to find what you're looking for.</p>
                         <Button
                             variant="secondary"
-                            style={{ mt: '1.5rem' }}
+                            style={{ marginTop: '1.5rem' }}
                             onClick={() => { setActiveTab('All'); setSearchQuery(''); }}
                         >
                             Reset all filters

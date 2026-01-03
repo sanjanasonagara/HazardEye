@@ -6,7 +6,6 @@ import AdminApp from './admin/App';
 import SupervisorApp from './supervisor/App';
 import EmployeeApp from './employee/App';
 import { LoginPage } from './auth/LoginPage';
-import { SignupPage } from './auth/SignupPage';
 
 const LandingPage = () => {
     return (
@@ -108,6 +107,7 @@ const ContextWrapper = () => (
 );
 
 function App() {
+    console.log('App: Rendering');
     return (
         <BrowserRouter>
             <LocationProvider>

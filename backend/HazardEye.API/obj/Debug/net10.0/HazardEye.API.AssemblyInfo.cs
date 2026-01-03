@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HazardEye.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+041984faf150e7aa509f34323ba0b8b930b24f25")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8017d8536f240195c0f349da9513c46a2f7e0ddf")]
 [assembly: System.Reflection.AssemblyProductAttribute("HazardEye.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HazardEye.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
